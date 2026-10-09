@@ -184,7 +184,7 @@ export default function AgreementDetailPage() {
         </div>
 
         {/* Progress Track */}
-        <div className="space-y-1.5 pt-2 border-t border-[#202024]">
+        <div className="space-y-1.5 pt-2 border-t border-[#26262a]">
           <div className="flex justify-between text-xs text-neutral-400">
             <span>
               Settlement Disbursed: <span className="text-white font-semibold">{percentSettled}%</span>
@@ -193,7 +193,7 @@ export default function AgreementDetailPage() {
               ${formatUsdc(settledAmountUsdc)} / ${formatUsdc(agreement.totalAmountUsdc)} USDC
             </span>
           </div>
-          <div className="w-full h-2 bg-[#141416] rounded-full overflow-hidden">
+          <div className="w-full h-2 bg-neutral-900 rounded-full overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-violet-600 to-violet-400 rounded-full transition-all duration-300"
               style={{ width: `${percentSettled}%` }}
@@ -203,19 +203,19 @@ export default function AgreementDetailPage() {
 
         {/* Monospace IDs Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1 text-xs">
-          <div className="p-3 bg-[#141416] border border-[#202024] rounded-xl">
+          <div className="p-3 bg-[#000000] border border-[#26262a] rounded-xl">
             <span className="text-[10px] text-neutral-500 uppercase block mb-0.5">SPONSOR ACCOUNT</span>
             <span className="text-neutral-200 font-mono text-xs">{truncateAddress(agreement.sponsor, 6)}</span>
           </div>
-          <div className="p-3 bg-[#141416] border border-[#202024] rounded-xl">
+          <div className="p-3 bg-[#000000] border border-[#26262a] rounded-xl">
             <span className="text-[10px] text-neutral-500 uppercase block mb-0.5">WORKER ACCOUNT</span>
             <span className="text-neutral-200 font-mono text-xs">{truncateAddress(agreement.worker, 6)}</span>
           </div>
-          <div className="p-3 bg-[#141416] border border-[#202024] rounded-xl">
+          <div className="p-3 bg-[#000000] border border-[#26262a] rounded-xl">
             <span className="text-[10px] text-neutral-500 uppercase block mb-0.5">VAULT PDA</span>
             <span className="text-violet-300 font-mono text-xs">{truncateAddress(agreement.vaultPda, 6)}</span>
           </div>
-          <div className="p-3 bg-[#141416] border border-[#202024] rounded-xl">
+          <div className="p-3 bg-[#000000] border border-[#26262a] rounded-xl">
             <span className="text-[10px] text-neutral-500 uppercase block mb-0.5">TERMS SHA-256</span>
             <span className="text-neutral-300 font-mono text-xs">{truncateAddress(agreement.termsHash, 6)}</span>
           </div>
@@ -235,13 +235,13 @@ export default function AgreementDetailPage() {
           {agreement.milestones.map((milestone) => (
             <div
               key={milestone.publicKey}
-              className="bg-[#0d0d0f] border border-[#26262a] hover:border-violet-500/40 rounded-2xl p-4 sm:p-5 transition-all space-y-3.5"
+              className="bg-[#000000] border border-[#26262a] hover:border-violet-500/40 rounded-2xl p-4 sm:p-5 transition-all space-y-3.5"
             >
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 {/* Left: Index, Title, Status, Criteria */}
                 <div className="space-y-1.5 flex-1 cursor-pointer" onClick={() => openDrawer('inspect', milestone)}>
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="px-2 py-0.5 rounded-lg bg-[#141416] border border-violet-500/30 text-xs font-bold text-violet-300">
+                    <span className="px-2 py-0.5 rounded-lg bg-[#000000] border border-violet-500/30 text-xs font-bold text-violet-300">
                       #{milestone.index + 1}
                     </span>
                     <h3 className="text-sm sm:text-base font-bold text-white hover:text-violet-300 transition-colors">{milestone.title}</h3>
@@ -273,7 +273,7 @@ export default function AgreementDetailPage() {
                 </div>
 
                 {/* Right: Amount & Direct Action Triggers */}
-                <div className="flex flex-row lg:flex-col items-center lg:items-end justify-between border-t lg:border-t-0 pt-3 lg:pt-0 border-[#202024] gap-3">
+                <div className="flex flex-row lg:flex-col items-center lg:items-end justify-between border-t lg:border-t-0 pt-3 lg:pt-0 border-[#26262a] gap-3">
                   <div className="text-left lg:text-right">
                     <div className="text-base sm:text-lg font-bold text-emerald-400">
                       ${formatUsdc(milestone.amountUsdc)} USDC

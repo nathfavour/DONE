@@ -109,9 +109,9 @@ export function EvidenceForm({ agreementKey, milestone, onExecute }: EvidenceFor
                 'https://arweave.net/tx_indexer_geyser_final_v1.tar.gz',
               ]);
             }}
-            className="text-[10px] bg-[#141416] hover:bg-violet-950/40 text-violet-300 px-2.5 py-1 rounded-lg border border-[#26262a] hover:border-violet-500/40"
+            className="text-[10px] bg-[#000000] hover:bg-violet-950/40 text-violet-300 px-2.5 py-1 rounded-lg border border-[#26262a] hover:border-violet-500/40"
           >
-            ⚡ Auto-Fill Demo Proof
+            ⚡ Auto-Fill Evidence Data
           </button>
           <span className="text-[11px] text-neutral-400">WORKER ACTION</span>
         </div>
@@ -124,7 +124,7 @@ export function EvidenceForm({ agreementKey, milestone, onExecute }: EvidenceFor
           </p>
 
           {/* DoD Criteria checklist summary for worker reference */}
-          <div className="p-3.5 bg-[#141416] border border-[#202024] rounded-xl space-y-2">
+          <div className="p-3.5 bg-[#000000] border border-[#26262a] rounded-xl space-y-2">
             <span className="text-[10px] uppercase font-bold text-neutral-400 block tracking-wider">
               TARGET DEFINITION OF DONE CRITERIA ({milestone.dodCriteria.length})
             </span>
@@ -195,7 +195,7 @@ export function EvidenceForm({ agreementKey, milestone, onExecute }: EvidenceFor
           />
 
           {/* Live Canonical Hash Display */}
-          <div className="p-3 bg-[#141416] border border-[#202024] rounded-xl space-y-1">
+          <div className="p-3 bg-[#000000] border border-[#26262a] rounded-xl space-y-1">
             <span className="text-[10px] uppercase font-bold text-neutral-400 block tracking-wider">
               CANONICAL SHA-256 EVIDENCE COMMITMENT:
             </span>

@@ -144,7 +144,7 @@ export default function OverviewPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => requestDevnetUsdcFaucet(5_000_000_000)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#141416] hover:bg-[#1a1a1e] border border-[#26262a] text-xs font-semibold text-neutral-300 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#000000] hover:bg-neutral-900 border border-[#26262a] text-xs font-semibold text-neutral-300 transition-colors"
           >
             <Droplets className="w-3.5 h-3.5 text-violet-400" />
             +5K USDC
@@ -162,7 +162,7 @@ export default function OverviewPage() {
 
       {/* Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="p-4 bg-[#0d0d0f] border border-[#26262a] rounded-2xl space-y-1">
+        <div className="p-4 bg-[#000000] border border-[#26262a] rounded-2xl space-y-1">
           <span className="text-[10px] text-neutral-400 uppercase tracking-wider block font-semibold">
             Active Escrows
           </span>
@@ -171,7 +171,7 @@ export default function OverviewPage() {
           </div>
         </div>
 
-        <div className="p-4 bg-[#0d0d0f] border border-[#26262a] rounded-2xl space-y-1">
+        <div className="p-4 bg-[#000000] border border-[#26262a] rounded-2xl space-y-1">
           <span className="text-[10px] text-neutral-400 uppercase tracking-wider block font-semibold">
             Total Value Locked
           </span>
@@ -180,7 +180,7 @@ export default function OverviewPage() {
           </div>
         </div>
 
-        <div className="p-4 bg-[#0d0d0f] border border-[#26262a] rounded-2xl space-y-1">
+        <div className="p-4 bg-[#000000] border border-[#26262a] rounded-2xl space-y-1">
           <span className="text-[10px] text-neutral-400 uppercase tracking-wider block font-semibold">
             Settled Volume
           </span>
@@ -192,7 +192,7 @@ export default function OverviewPage() {
 
       {/* Filter Tabs */}
       <div className="flex items-center justify-between gap-4 pt-2">
-        <div className="flex items-center bg-[#0d0d0f] border border-[#26262a] p-1 rounded-xl text-xs">
+        <div className="flex items-center bg-[#000000] border border-[#26262a] p-1 rounded-xl text-xs">
           {[
             { id: 'all', label: `All (${agreements.length})` },
             { id: 'active', label: 'In Progress' },
@@ -216,7 +216,7 @@ export default function OverviewPage() {
 
       {/* Agreement List or Clean Zero State */}
       {agreements.length === 0 ? (
-        <div className="p-8 sm:p-12 text-center bg-[#0d0d0f] border border-[#26262a] rounded-3xl space-y-4">
+        <div className="p-8 sm:p-12 text-center bg-[#000000] border border-[#26262a] rounded-3xl space-y-4">
           <DoneLogo className="w-16 h-16 mx-auto" />
           <div className="space-y-1 max-w-md mx-auto">
             <h3 className="text-lg font-bold text-white">No Escrow Agreements Yet</h3>
@@ -238,7 +238,7 @@ export default function OverviewPage() {
           </div>
         </div>
       ) : filteredAgreements.length === 0 ? (
-        <div className="p-8 text-center bg-[#0d0d0f] border border-[#26262a] rounded-2xl text-xs text-neutral-400">
+        <div className="p-8 text-center bg-[#000000] border border-[#26262a] rounded-2xl text-xs text-neutral-400">
           No agreements matching this filter.
         </div>
       ) : (
@@ -260,7 +260,7 @@ export default function OverviewPage() {
             return (
               <div
                 key={agreement.publicKey}
-                className="p-5 bg-[#0d0d0f] hover:bg-[#121215] border border-[#26262a] hover:border-violet-500/40 rounded-2xl transition-all space-y-4"
+                className="p-5 bg-[#000000] hover:bg-neutral-950 border border-[#26262a] hover:border-violet-500/40 rounded-2xl transition-all space-y-4"
               >
                 {/* Top Row */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -292,7 +292,7 @@ export default function OverviewPage() {
                 </div>
 
                 {/* Progress bar */}
-                <div className="w-full h-1.5 bg-[#1a1a1e] rounded-full overflow-hidden">
+                <div className="w-full h-1.5 bg-neutral-900 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-violet-500 transition-all duration-300"
                     style={{ width: `${progressPct}%` }}
@@ -313,7 +313,7 @@ export default function OverviewPage() {
                             ? 'bg-violet-950/30 text-violet-300 border-violet-500/30 font-bold'
                             : m.state === MilestoneState.EVIDENCE_SUBMITTED
                             ? 'bg-amber-950/30 text-amber-300 border-amber-500/30'
-                            : 'bg-[#141416] text-neutral-400 border-[#26262a]'
+                            : 'bg-[#000000] text-neutral-400 border-[#26262a]'
                         }`}
                       >
                         #{idx + 1}: ${formatUsdc(m.amountUsdc)}
@@ -372,7 +372,7 @@ export default function OverviewPage() {
 
                     <Link
                       href={`/agreements/${agreement.publicKey}`}
-                      className="px-3 py-1.5 rounded-xl bg-[#141416] hover:bg-[#1a1a1e] border border-[#26262a] text-neutral-300 text-xs font-semibold inline-flex items-center gap-1"
+                      className="px-3 py-1.5 rounded-xl bg-[#000000] hover:bg-neutral-900 border border-[#26262a] text-neutral-300 text-xs font-semibold inline-flex items-center gap-1"
                     >
                       Details <ArrowRight className="w-3 h-3" />
                     </Link>

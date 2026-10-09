@@ -11,10 +11,8 @@ export function Card({
 }) {
   return (
     <div
-      className={`${
-        elevated
-          ? 'bg-[#141416] border border-[#202024] p-4 rounded-xl'
-          : 'bg-[#0d0d0f] border border-[#26262a] p-5 rounded-2xl'
+      className={`bg-[#000000] border border-[#26262a] ${
+        elevated ? 'p-4 rounded-xl shadow-lg' : 'p-5 rounded-2xl'
       } ${className}`}
     >
       {children}

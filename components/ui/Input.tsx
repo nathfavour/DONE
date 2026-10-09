@@ -17,7 +17,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         )}
         <input
           ref={ref}
-          className={`w-full bg-[#141416] border px-3.5 py-2.5 text-xs sm:text-sm text-neutral-100 placeholder-neutral-500 rounded-xl focus:outline-none focus:border-neutral-400 transition-colors ${
+          className={`w-full bg-[#000000] border px-3.5 py-2.5 text-xs sm:text-sm text-neutral-100 placeholder-neutral-500 rounded-xl focus:outline-none focus:border-violet-500 transition-colors ${
             error ? 'border-red-500' : 'border-[#26262a]'
           } ${className}`}
           {...props}
@@ -47,7 +47,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
         )}
         <textarea
           ref={ref}
-          className={`w-full bg-[#141416] border px-3.5 py-2.5 text-xs sm:text-sm text-neutral-100 placeholder-neutral-500 rounded-xl focus:outline-none focus:border-neutral-400 transition-colors ${
+          className={`w-full bg-[#000000] border px-3.5 py-2.5 text-xs sm:text-sm text-neutral-100 placeholder-neutral-500 rounded-xl focus:outline-none focus:border-violet-500 transition-colors ${
             error ? 'border-red-500' : 'border-[#26262a]'
           } ${className}`}
           {...props}

@@ -63,7 +63,7 @@ export function FundingModal({ agreement, isOpen, onClose, onExecute }: FundingM
           Transfer the agreed budget from your wallet ATA into the deterministic Escrow Vault PDA to activate this agreement.
         </p>
 
-        <div className="p-4 bg-[#141416] border border-[#202024] rounded-xl space-y-3">
+        <div className="p-4 bg-[#000000] border border-[#26262a] rounded-xl space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-neutral-400">AGREEMENT:</span>
             <span className="font-semibold text-neutral-200 truncate max-w-[200px]">{agreement.title}</span>

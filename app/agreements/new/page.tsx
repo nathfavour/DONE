@@ -193,7 +193,7 @@ export default function CreateAgreementPage() {
 
             <div className="space-y-2">
               {milestones.map((m, idx) => (
-                <div key={idx} className="p-3 bg-[#141416] border border-[#26262a] rounded-xl space-y-2">
+                <div key={idx} className="p-3 bg-[#000000] border border-[#26262a] rounded-xl space-y-2">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-xs font-bold text-violet-400">#{idx + 1}</span>
                     <input
@@ -216,7 +216,7 @@ export default function CreateAgreementPage() {
                           updated[idx].amount = parseFloat(e.target.value) || 0;
                           setMilestones(updated);
                         }}
-                        className="w-16 bg-[#0d0d0f] border border-[#26262a] rounded px-1.5 py-0.5 text-right font-semibold text-white text-xs outline-none"
+                        className="w-16 bg-[#000000] border border-[#26262a] rounded px-1.5 py-0.5 text-right font-semibold text-white text-xs outline-none"
                       />
                       <span className="text-neutral-500 text-[10px]">USDC</span>
                     </div>
@@ -249,7 +249,7 @@ export default function CreateAgreementPage() {
       ) : (
         /* Step 2: Confirm */
         <Card className="space-y-5 text-xs">
-          <div className="flex flex-col items-center justify-center p-6 rounded-2xl bg-[#141416] border border-[#26262a] text-center space-y-2">
+          <div className="flex flex-col items-center justify-center p-6 rounded-2xl bg-[#000000] border border-[#26262a] text-center space-y-2">
             <DoneLogo className="w-12 h-12" />
             <h3 className="text-base font-bold text-white">{title}</h3>
             <div className="text-2xl font-black text-violet-400">${formatUsdc(totalAmount * 1e6)} USDC</div>
@@ -257,19 +257,19 @@ export default function CreateAgreementPage() {
           </div>
 
           <div className="space-y-2">
-            <div className="flex justify-between p-3 rounded-xl bg-[#141416] border border-[#26262a]">
+            <div className="flex justify-between p-3 rounded-xl bg-[#000000] border border-[#26262a]">
               <span className="text-neutral-400">Sponsor:</span>
               <span className="text-violet-300 font-mono text-[11px]">
                 {publicKeyString ? `${publicKeyString.slice(0, 10)}...` : 'Connected Wallet'}
               </span>
             </div>
-            <div className="flex justify-between p-3 rounded-xl bg-[#141416] border border-[#26262a]">
+            <div className="flex justify-between p-3 rounded-xl bg-[#000000] border border-[#26262a]">
               <span className="text-neutral-400">Worker:</span>
               <span className="text-violet-300 font-mono text-[11px]">
                 {workerAddress ? `${workerAddress.slice(0, 10)}...` : 'Active Wallet'}
               </span>
             </div>
-            <div className="flex justify-between p-3 rounded-xl bg-[#141416] border border-[#26262a]">
+            <div className="flex justify-between p-3 rounded-xl bg-[#000000] border border-[#26262a]">
               <span className="text-neutral-400">Security:</span>
               <span className="text-emerald-400 font-semibold flex items-center gap-1">
                 <Lock className="w-3.5 h-3.5" /> Non-Custodial Vault PDA

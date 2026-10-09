@@ -18,7 +18,7 @@ export function TxStateModal({ state, isOpen, onClose }: TxStateModalProps) {
   return (
     <div className="fixed top-0 inset-x-0 z-50 flex justify-center pointer-events-none px-4 pt-3 font-mono">
       {/* Slide-Down Top Drawer Banner */}
-      <div className="w-full max-w-2xl bg-[#0d0d0f] border border-[#26262a] rounded-2xl shadow-2xl p-4 sm:p-5 pointer-events-auto animate-in slide-in-from-top duration-300">
+      <div className="w-full max-w-2xl bg-[#000000] border border-[#26262a] rounded-2xl shadow-2xl p-4 sm:p-5 pointer-events-auto animate-in slide-in-from-top duration-300">
         <div className="flex items-center justify-between pb-3 border-b border-[#26262a]">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
@@ -28,7 +28,7 @@ export function TxStateModal({ state, isOpen, onClose }: TxStateModalProps) {
           </div>
           <button
             onClick={onClose}
-            className="text-neutral-400 hover:text-white p-1 rounded-lg hover:bg-[#141416]"
+            className="text-neutral-400 hover:text-white p-1 rounded-lg hover:bg-neutral-900"
           >
             <X className="w-4 h-4" />
           </button>
@@ -44,7 +44,7 @@ export function TxStateModal({ state, isOpen, onClose }: TxStateModalProps) {
             </div>
 
             {state.status === 'requesting_signature' && (
-              <span className="px-2.5 py-1 text-xs rounded-lg bg-neutral-800 text-neutral-300 animate-pulse">
+              <span className="px-2.5 py-1 text-xs rounded-lg bg-neutral-900 text-neutral-300 animate-pulse">
                 Awaiting Wallet Signature
               </span>
             )}
@@ -67,7 +67,7 @@ export function TxStateModal({ state, isOpen, onClose }: TxStateModalProps) {
 
           {/* Signature / Details */}
           {state.signature && (
-            <div className="mt-3 p-3 bg-[#141416] border border-[#202024] rounded-xl text-xs space-y-1.5">
+            <div className="mt-3 p-3 bg-[#000000] border border-[#26262a] rounded-xl text-xs space-y-1.5">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] text-neutral-400">TX SIGNATURE:</span>
                 <a

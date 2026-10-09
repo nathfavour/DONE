@@ -76,7 +76,7 @@ export default function MilestoneDetailPage() {
       </div>
 
       {/* Header Banner */}
-      <div className="p-6 bg-[#0d0d0f] border border-[#26262a] rounded-2xl space-y-5">
+      <div className="p-6 bg-[#000000] border border-[#26262a] rounded-2xl space-y-5">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="flex items-start gap-3.5">
             <DoneLogo className="w-8 h-8 shrink-0 mt-0.5" />
@@ -109,7 +109,7 @@ export default function MilestoneDetailPage() {
 
       {/* Definition of Done Criteria Checklist */}
       <Card>
-        <CardHeader className="bg-[#141416]">
+        <CardHeader className="bg-[#000000]">
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-violet-400" />
             <h3 className="font-bold text-xs text-white uppercase tracking-wider">
@@ -123,9 +123,9 @@ export default function MilestoneDetailPage() {
             {milestone.dodCriteria.map((c, idx) => (
               <div
                 key={idx}
-                className="p-3 bg-[#141416] border border-[#202024] rounded-xl flex items-start gap-3"
+                className="p-3 bg-[#000000] border border-[#26262a] rounded-xl flex items-start gap-3"
               >
-                <div className="w-5 h-5 bg-[#0d0d0f] border border-[#26262a] text-violet-300 rounded flex items-center justify-center text-xs font-bold shrink-0">
+                <div className="w-5 h-5 bg-[#000000] border border-[#26262a] text-violet-300 rounded flex items-center justify-center text-xs font-bold shrink-0">
                   {idx + 1}
                 </div>
                 <div className="text-xs text-neutral-200 leading-relaxed pt-0.5">{c}</div>
@@ -133,7 +133,7 @@ export default function MilestoneDetailPage() {
             ))}
           </div>
 
-          <div className="p-3 bg-[#141416] border border-[#202024] rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+          <div className="p-3 bg-[#000000] border border-[#26262a] rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
             <div className="flex items-center gap-2">
               <Hash className="w-3.5 h-3.5 text-violet-400 shrink-0" />
               <span className="text-neutral-400 text-[10px] uppercase font-bold">
@@ -149,8 +149,8 @@ export default function MilestoneDetailPage() {
 
       {/* Evidence Submission Card */}
       {milestone.evidence ? (
-        <Card className="bg-[#0d0d0f] border border-[#26262a]">
-          <CardHeader className="bg-[#141416]">
+        <Card className="bg-[#000000] border border-[#26262a]">
+          <CardHeader className="bg-[#000000]">
             <div className="flex items-center gap-2 text-emerald-400">
               <CheckCircle2 className="w-4 h-4" />
               <h3 className="font-bold text-xs text-white uppercase tracking-wider">
@@ -203,7 +203,7 @@ export default function MilestoneDetailPage() {
               <span className="text-neutral-400 text-[10px] block uppercase font-bold mb-1">
                 WORKER NOTES
               </span>
-              <p className="text-neutral-300 bg-[#141416] p-2.5 rounded-xl border border-[#202024] leading-relaxed">
+              <p className="text-neutral-300 bg-[#000000] p-2.5 rounded-xl border border-[#26262a] leading-relaxed">
                 {milestone.evidence.notes}
               </p>
             </div>

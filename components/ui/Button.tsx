@@ -17,15 +17,15 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       violet:
         'bg-violet-600 text-white font-semibold hover:bg-violet-500 active:bg-violet-700 shadow-lg shadow-violet-600/25 border border-violet-500/40',
       secondary:
-        'bg-[#141416] border border-[#26262a] text-neutral-200 hover:bg-[#1c1c20] hover:border-[#323238] hover:text-white',
+        'bg-[#000000] border border-[#26262a] text-neutral-200 hover:border-violet-500/40 hover:text-white',
       outline:
-        'bg-transparent border border-[#26262a] text-neutral-200 hover:bg-[#141416] hover:border-violet-500/30',
+        'bg-transparent border border-[#26262a] text-neutral-200 hover:bg-[#000000] hover:border-violet-500/30',
       danger:
         'bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20',
       destructive:
         'bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20',
       ghost:
-        'bg-transparent hover:bg-[#141416] text-neutral-300 border border-transparent',
+        'bg-transparent hover:bg-[#000000] text-neutral-300 border border-transparent',
     };
 
     const sizes = {

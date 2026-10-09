@@ -32,7 +32,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   ];
 
   return (
-    <div className="min-h-screen bg-[#000000] text-neutral-100 flex font-mono selection:bg-neutral-800 selection:text-white">
+    <div className="min-h-screen bg-[#16171a] text-neutral-100 flex font-mono selection:bg-neutral-800 selection:text-white">
       {/* Create Agreement Drawer mounted globally */}
       <CreateAgreementDrawer
         isOpen={isCreateDrawerOpen}
@@ -43,9 +43,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       />
 
       {/* Desktop: Fixed Left Navigation */}
-      <aside className="hidden md:flex flex-col w-64 bg-[#0d0d0f] border-r border-[#26262a] fixed inset-y-0 left-0 z-40 select-none">
+      <aside className="hidden md:flex flex-col w-64 bg-[#000000] border-r border-[#26262a] fixed inset-y-0 left-0 z-40 select-none">
         {/* Brand with DoneLogo */}
-        <Link href="/" className="h-16 px-6 flex items-center gap-3 border-b border-[#26262a] hover:bg-[#141416]/50 transition-colors">
+        <Link href="/" className="h-16 px-6 flex items-center gap-3 border-b border-[#26262a] hover:bg-neutral-950 transition-colors">
           <DoneLogo className="w-8 h-8" />
           <div className="flex flex-col">
             <div className="flex items-center gap-1.5">
@@ -72,8 +72,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 href={item.href}
                 className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all ${
                   active
-                    ? 'bg-[#141416] text-white border border-violet-500/40 shadow-sm shadow-violet-950/40'
-                    : 'text-neutral-400 hover:text-white hover:bg-[#141416]/50 border border-transparent'
+                    ? 'bg-[#000000] text-white border border-violet-500/50 shadow-sm shadow-violet-950/40'
+                    : 'text-neutral-400 hover:text-white hover:bg-[#000000] border border-transparent'
                 }`}
               >
                 <Icon className={`w-4 h-4 ${active ? 'text-violet-400' : 'text-neutral-400'}`} />
@@ -95,7 +95,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         {/* Desktop Left Nav Footer: Live Network Status */}
         <div className="p-4 border-t border-[#26262a] space-y-2 text-xs">
-          <div className="flex items-center justify-between px-2 py-1.5 rounded-lg bg-[#141416] border border-[#202024] text-[11px] text-neutral-300">
+          <div className="flex items-center justify-between px-2 py-1.5 rounded-lg bg-[#000000] border border-[#26262a] text-[11px] text-neutral-300">
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               Solana Devnet
@@ -106,9 +106,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main Container Wrapper */}
-      <div className="flex-1 flex flex-col md:pl-64 min-w-0">
+      <div className="flex-1 flex flex-col md:pl-64 min-w-0 bg-[#16171a]">
         {/* Top Context Bar */}
-        <header className="h-16 px-4 md:px-8 border-b border-[#26262a] bg-[#0d0d0f] flex items-center justify-between sticky top-0 z-30">
+        <header className="h-16 px-4 md:px-8 border-b border-[#26262a] bg-[#000000] flex items-center justify-between sticky top-0 z-30">
           {/* Mobile brand */}
           <Link href="/" className="md:hidden flex items-center gap-2.5">
             <DoneLogo className="w-7 h-7" />
@@ -120,7 +120,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           {/* Desktop Left: Live Status */}
           <div className="hidden md:flex items-center gap-3 text-xs text-neutral-400">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#141416] border border-[#202024] text-neutral-200">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#000000] border border-[#26262a] text-neutral-200">
               <Activity className="w-3.5 h-3.5 text-violet-400" />
               <span>Non-Custodial Escrow Protocol</span>
             </div>
@@ -147,7 +147,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Mobile Bottom Dock Navigation */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 h-16 bg-[#0d0d0f] border-t border-[#26262a] rounded-t-2xl z-40 flex items-center justify-around px-2 select-none backdrop-blur-lg">
+      <nav className="md:hidden fixed bottom-0 inset-x-0 h-16 bg-[#000000] border-t border-[#26262a] rounded-t-2xl z-40 flex items-center justify-around px-2 select-none">
         {navItems.map((item) => {
           const Icon = item.icon;
           const active =

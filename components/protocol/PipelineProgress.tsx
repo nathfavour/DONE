@@ -42,10 +42,10 @@ export function PipelineProgress({ state }: { state: MilestoneState }) {
               key={step.id}
               className={`p-3 rounded-xl border transition-all ${
                 step.completed
-                  ? 'bg-[#141416] border-emerald-500/30 text-emerald-400'
+                  ? 'bg-[#000000] border-emerald-500/40 text-emerald-400'
                   : step.current
-                  ? 'bg-[#141416] border-violet-500/60 text-violet-300 shadow-sm shadow-violet-950/40'
-                  : 'bg-[#0d0d0f] border-[#26262a] text-neutral-500'
+                  ? 'bg-[#000000] border-violet-500/60 text-violet-300 shadow-sm shadow-violet-950/40'
+                  : 'bg-[#000000] border-[#26262a] text-neutral-500'
               }`}
             >
               <div className="flex items-center justify-between mb-1">

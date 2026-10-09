@@ -23,12 +23,12 @@ export function MilestoneRow({
   const detailUrl = `/agreements/${agreementId}`;
 
   return (
-    <div className="border border-[#26262a] bg-[#0d0d0f] p-5 rounded-2xl transition-all hover:border-neutral-500 font-mono">
+    <div className="border border-[#26262a] bg-[#000000] p-5 rounded-2xl transition-all hover:border-violet-500/40 font-mono">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         {/* Left: Index, Title, and Badges */}
         <div className="space-y-1.5 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-bold text-neutral-300 bg-[#141416] px-2 py-0.5 rounded-lg border border-[#202024]">
+            <span className="text-xs font-bold text-neutral-300 bg-[#000000] px-2 py-0.5 rounded-lg border border-[#26262a]">
               M#{milestone.index}
             </span>
             <h4 className="text-sm sm:text-base font-bold text-white">{milestone.title}</h4>
@@ -68,7 +68,7 @@ export function MilestoneRow({
         </div>
 
         {/* Right: Amount & CTA */}
-        <div className="flex flex-row lg:flex-col items-center lg:items-end justify-between border-t lg:border-t-0 pt-3 lg:pt-0 border-[#202024] gap-3">
+        <div className="flex flex-row lg:flex-col items-center lg:items-end justify-between border-t lg:border-t-0 pt-3 lg:pt-0 border-[#26262a] gap-3">
           <div className="text-left lg:text-right">
             <div className="text-base sm:text-lg font-bold text-emerald-400">
               ${formatUsdc(milestone.amountUsdc)} USDC

@@ -102,7 +102,7 @@ export function VerificationCard({
           <span className="text-[11px] text-emerald-400 font-bold">TERMINAL STATE</span>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="p-4 bg-[#141416] border border-[#202024] rounded-xl space-y-2 text-xs">
+          <div className="p-4 bg-[#000000] border border-[#26262a] rounded-xl space-y-2 text-xs">
             <div className="flex justify-between items-center">
               <span className="text-neutral-400">SETTLED VALUE:</span>
               <span className="text-base font-bold text-emerald-400">
@@ -155,7 +155,7 @@ export function VerificationCard({
             Definition of Done criteria have been cryptographically verified by the authorized party. The protocol escrow vault is now unlocked for settlement release to the worker’s USDC token account.
           </p>
 
-          <div className="p-4 bg-[#141416] border border-[#202024] rounded-xl space-y-2 text-xs">
+          <div className="p-4 bg-[#000000] border border-[#26262a] rounded-xl space-y-2 text-xs">
             <div className="flex justify-between items-center">
               <span className="text-neutral-400">CLAIMABLE VALUE:</span>
               <span className="text-base font-bold text-emerald-400">
@@ -228,7 +228,7 @@ export function VerificationCard({
                   });
                   setCheckedCriteria(all);
                 }}
-                className="text-[10px] text-violet-300 bg-[#141416] px-2.5 py-1 rounded-lg border border-violet-500/30"
+                className="text-[10px] text-violet-300 bg-[#000000] px-2.5 py-1 rounded-lg border border-violet-500/30"
               >
                 ⚡ Check All Criteria
               </button>
@@ -240,8 +240,8 @@ export function VerificationCard({
                   onClick={() => toggleCriteria(idx)}
                   className={`p-3 border rounded-xl cursor-pointer select-none transition-colors flex items-start gap-2.5 ${
                     checkedCriteria[idx]
-                      ? 'bg-[#141416] border-emerald-500/50 text-neutral-100'
-                      : 'bg-[#0d0d0f] border-[#26262a] text-neutral-400'
+                      ? 'bg-[#000000] border-emerald-500/50 text-neutral-100'
+                      : 'bg-[#000000] border-[#26262a] text-neutral-400'
                   }`}
                 >
                   <div

@@ -43,7 +43,7 @@ export function SlideDrawer({
 
       {/* Desktop: Right Sidebar */}
       <aside
-        className={`hidden md:flex flex-col fixed top-0 right-0 h-full ${width} max-w-full bg-[#0a0a0c] border-l border-[#26262a] p-6 z-50 overflow-y-auto shadow-2xl transition-transform duration-300 animate-in slide-in-from-right`}
+        className={`hidden md:flex flex-col fixed top-0 right-0 h-full ${width} max-w-full bg-[#000000] border-l border-[#26262a] p-6 z-50 overflow-y-auto shadow-2xl transition-transform duration-300 animate-in slide-in-from-right`}
       >
         <div className="flex items-start justify-between pb-4 border-b border-[#26262a]">
           <div className="flex items-center gap-3">
@@ -55,7 +55,7 @@ export function SlideDrawer({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-neutral-400 hover:text-white rounded-lg hover:bg-[#141416] transition-colors"
+            className="p-1.5 text-neutral-400 hover:text-white rounded-lg hover:bg-neutral-900 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -64,7 +64,7 @@ export function SlideDrawer({
       </aside>
 
       {/* Mobile: Bottom Drawer */}
-      <div className="md:hidden fixed inset-x-0 bottom-0 bg-[#0a0a0c] border-t border-[#26262a] rounded-t-3xl p-6 z-50 max-h-[88vh] overflow-y-auto shadow-2xl transition-transform duration-300 animate-in slide-in-from-bottom">
+      <div className="md:hidden fixed inset-x-0 bottom-0 bg-[#000000] border-t border-[#26262a] rounded-t-3xl p-6 z-50 max-h-[88vh] overflow-y-auto shadow-2xl transition-transform duration-300 animate-in slide-in-from-bottom">
         {/* Drag handle */}
         <div className="w-12 h-1.5 bg-[#26262a] rounded-full mx-auto mb-4" />
 
@@ -78,7 +78,7 @@ export function SlideDrawer({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-neutral-400 hover:text-white rounded-lg hover:bg-[#141416] transition-colors"
+            className="p-1.5 text-neutral-400 hover:text-white rounded-lg hover:bg-neutral-900 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>

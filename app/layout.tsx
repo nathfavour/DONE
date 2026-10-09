@@ -23,8 +23,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark bg-[#000000] text-neutral-100">
-      <body className="min-h-screen bg-[#000000] text-neutral-100 antialiased font-mono selection:bg-neutral-800 selection:text-white" suppressHydrationWarning>
+    <html lang="en" className="dark bg-[#16171a] text-neutral-100">
+      <body className="min-h-screen bg-[#16171a] text-neutral-100 antialiased font-mono selection:bg-neutral-800 selection:text-white" suppressHydrationWarning>
         <AppProviders>
           <AppShell>{children}</AppShell>
         </AppProviders>

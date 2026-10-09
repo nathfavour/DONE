@@ -68,7 +68,7 @@ export default function SettingsDiagnosticsPage() {
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex items-center bg-[#0d0d0f] border border-[#26262a] p-1 rounded-xl self-start sm:self-auto">
+        <div className="flex items-center bg-[#000000] border border-[#26262a] p-1 rounded-xl self-start sm:self-auto">
           <button
             onClick={() => setActiveTab('general')}
             className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
@@ -115,15 +115,15 @@ export default function SettingsDiagnosticsPage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-              <div className="p-3 bg-[#141416] border border-[#202024] rounded-xl">
+              <div className="p-3 bg-[#000000] border border-[#26262a] rounded-xl">
                 <span className="text-[10px] text-neutral-500 uppercase block mb-1">NETWORK</span>
                 <span className="font-bold text-neutral-200">Solana Devnet</span>
               </div>
-              <div className="p-3 bg-[#141416] border border-[#202024] rounded-xl">
+              <div className="p-3 bg-[#000000] border border-[#26262a] rounded-xl">
                 <span className="text-[10px] text-neutral-500 uppercase block mb-1">CURRENT SLOT</span>
                 <span className="font-bold text-neutral-200 tabular-nums">#{currentSlot.toLocaleString()}</span>
               </div>
-              <div className="p-3 bg-[#141416] border border-[#202024] rounded-xl">
+              <div className="p-3 bg-[#000000] border border-[#26262a] rounded-xl">
                 <span className="text-[10px] text-neutral-500 uppercase block mb-1">LATENCY</span>
                 <span className="font-bold text-emerald-400 tabular-nums">{rpcLatencyMs}ms</span>
               </div>
@@ -144,7 +144,7 @@ export default function SettingsDiagnosticsPage() {
                 <span className="text-[11px] text-neutral-400 block mb-1 font-semibold">
                   PROGRAM ID:
                 </span>
-                <div className="p-3 bg-[#141416] border border-[#202024] rounded-xl font-mono text-violet-300 break-all select-all">
+                <div className="p-3 bg-[#000000] border border-[#26262a] rounded-xl font-mono text-violet-300 break-all select-all">
                   {DONE_PROGRAM_ID.toBase58()}
                 </div>
               </div>
@@ -153,7 +153,7 @@ export default function SettingsDiagnosticsPage() {
                 <span className="text-[11px] text-neutral-400 block mb-1 font-semibold">
                   USDC DEVNET MINT:
                 </span>
-                <div className="p-3 bg-[#141416] border border-[#202024] rounded-xl font-mono text-emerald-400 break-all select-all">
+                <div className="p-3 bg-[#000000] border border-[#26262a] rounded-xl font-mono text-emerald-400 break-all select-all">
                   {DEVNET_USDC_MINT.toBase58()}
                 </div>
               </div>
@@ -244,7 +244,7 @@ export default function SettingsDiagnosticsPage() {
               {logs.map((log) => (
                 <div
                   key={log.id}
-                  className="p-3 bg-[#141416] border border-[#202024] rounded-xl space-y-1.5"
+                  className="p-3 bg-[#000000] border border-[#26262a] rounded-xl space-y-1.5"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">

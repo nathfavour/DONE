@@ -140,7 +140,7 @@ export default function SponsorDashboardPage() {
 
       {/* Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="p-4 bg-[#0d0d0f] border border-[#26262a] rounded-2xl space-y-1">
+        <div className="p-4 bg-[#000000] border border-[#26262a] rounded-2xl space-y-1">
           <span className="text-[10px] text-neutral-400 uppercase tracking-wider block font-semibold">
             Locked in Escrow
           </span>
@@ -149,7 +149,7 @@ export default function SponsorDashboardPage() {
           </div>
         </div>
 
-        <div className="p-4 bg-[#0d0d0f] border border-[#26262a] rounded-2xl space-y-1">
+        <div className="p-4 bg-[#000000] border border-[#26262a] rounded-2xl space-y-1">
           <span className="text-[10px] text-neutral-400 uppercase tracking-wider block font-semibold">
             Total Settled
           </span>
@@ -158,7 +158,7 @@ export default function SponsorDashboardPage() {
           </div>
         </div>
 
-        <div className="p-4 bg-[#0d0d0f] border border-[#26262a] rounded-2xl space-y-1">
+        <div className="p-4 bg-[#000000] border border-[#26262a] rounded-2xl space-y-1">
           <span className="text-[10px] text-neutral-400 uppercase tracking-wider block font-semibold">
             Pending Audits
           </span>
@@ -170,7 +170,7 @@ export default function SponsorDashboardPage() {
 
       {/* Review Queue */}
       {pendingVerifications.length > 0 && (
-        <div className="p-5 bg-[#0d0d0f] border border-amber-500/30 rounded-2xl space-y-3">
+        <div className="p-5 bg-[#000000] border border-amber-500/30 rounded-2xl space-y-3">
           <div className="flex items-center gap-2 text-amber-400 border-b border-[#26262a] pb-2">
             <AlertCircle className="w-4 h-4" />
             <h3 className="font-bold text-xs uppercase tracking-wider">
@@ -182,7 +182,7 @@ export default function SponsorDashboardPage() {
             {pendingVerifications.map(({ agreement, milestone }) => (
               <div
                 key={milestone.publicKey}
-                className="p-3.5 bg-[#141416] border border-[#202024] rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                className="p-3.5 bg-[#000000] border border-[#26262a] rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
               >
                 <div>
                   <div className="font-bold text-white">{milestone.title}</div>
@@ -218,7 +218,7 @@ export default function SponsorDashboardPage() {
         </h3>
 
         {agreements.length === 0 ? (
-          <div className="p-8 text-center bg-[#0d0d0f] border border-[#26262a] rounded-2xl space-y-3">
+          <div className="p-8 text-center bg-[#000000] border border-[#26262a] rounded-2xl space-y-3">
             <DoneLogo className="w-12 h-12 mx-auto" />
             <p className="text-xs text-neutral-400">No sponsored agreements yet.</p>
             <Button variant="primary" onClick={() => setIsCreateDrawerOpen(true)}>
@@ -229,7 +229,7 @@ export default function SponsorDashboardPage() {
           agreements.map((agreement) => (
             <div
               key={agreement.publicKey}
-              className="p-4 bg-[#0d0d0f] border border-[#26262a] hover:border-violet-500/40 rounded-2xl transition-all space-y-3 text-xs"
+              className="p-4 bg-[#000000] border border-[#26262a] hover:border-violet-500/40 rounded-2xl transition-all space-y-3 text-xs"
             >
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="flex items-center gap-2">

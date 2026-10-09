@@ -63,9 +63,9 @@ export function WalletConnectButton() {
 
   return (
     <div className="relative font-mono text-xs">
-      <div className="flex items-center gap-1.5 bg-[#0d0d0f] border border-[#26262a] rounded-xl p-1 shadow-sm">
+      <div className="flex items-center gap-1.5 bg-[#000000] border border-[#26262a] rounded-xl p-1 shadow-sm">
         {/* Balances */}
-        <div className="px-2.5 py-1 bg-[#141416] rounded-lg text-neutral-300 hidden sm:flex items-center gap-2 text-[11px]">
+        <div className="px-2.5 py-1 bg-[#000000] border border-neutral-900 rounded-lg text-neutral-300 hidden sm:flex items-center gap-2 text-[11px]">
           <span className="text-violet-400 font-semibold">${formatUsdc(usdcBalance)}</span>
           <span className="text-neutral-500 text-[10px]">USDC</span>
           <span className="text-neutral-700">|</span>
@@ -75,7 +75,7 @@ export function WalletConnectButton() {
         {/* Address and Wallet pill */}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-2 px-2.5 py-1.5 text-neutral-200 hover:text-white hover:bg-[#141416] rounded-lg transition-colors focus:outline-none"
+          className="flex items-center gap-2 px-2.5 py-1.5 text-neutral-200 hover:text-white hover:bg-neutral-900 rounded-lg transition-colors focus:outline-none"
         >
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
           <span className="font-semibold text-[11px] text-white">
@@ -88,7 +88,7 @@ export function WalletConnectButton() {
       {/* Account Details Drawer / Popover */}
       {isOpen && (
         <div
-          className="absolute right-0 mt-2 w-80 bg-[#0d0d0f] border border-[#26262a] rounded-2xl shadow-2xl p-4 z-50 text-neutral-300 animate-in fade-in duration-150 backdrop-blur-md"
+          className="absolute right-0 mt-2 w-80 bg-[#000000] border border-[#26262a] rounded-2xl shadow-2xl p-4 z-50 text-neutral-300 animate-in fade-in duration-150 backdrop-blur-md"
           onMouseLeave={() => setIsOpen(false)}
         >
           {/* Header with Done Logo */}
@@ -110,7 +110,7 @@ export function WalletConnectButton() {
           </div>
 
           {/* Connected Address Card */}
-          <div className="mt-3 p-2.5 bg-[#141416] rounded-xl border border-[#26262a]">
+          <div className="mt-3 p-2.5 bg-[#000000] rounded-xl border border-[#26262a]">
             <span className="text-[10px] text-neutral-400 uppercase tracking-wider block mb-1">
               Live Wallet Address
             </span>
@@ -121,7 +121,7 @@ export function WalletConnectButton() {
               <div className="flex items-center gap-1 shrink-0">
                 <button
                   onClick={handleCopy}
-                  className="p-1 text-neutral-400 hover:text-white rounded hover:bg-[#1f1f23] transition-colors"
+                  className="p-1 text-neutral-400 hover:text-white rounded hover:bg-neutral-900 transition-colors"
                   title="Copy Address"
                 >
                   {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
@@ -130,7 +130,7 @@ export function WalletConnectButton() {
                   href={getExplorerUrl(publicKeyString, 'address')}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-1 text-neutral-400 hover:text-white rounded hover:bg-[#1f1f23] transition-colors"
+                  className="p-1 text-neutral-400 hover:text-white rounded hover:bg-neutral-900 transition-colors"
                   title="View on Solana Explorer"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
@@ -152,7 +152,7 @@ export function WalletConnectButton() {
             <button
               onClick={handleAirdropSol}
               disabled={isAirdropping}
-              className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-[#141416] hover:bg-[#1e1a29] text-neutral-200 border border-[#26262a] transition-colors text-xs font-medium"
+              className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-[#000000] hover:bg-violet-950/20 text-neutral-200 border border-[#26262a] transition-colors text-xs font-medium"
             >
               <ShieldCheck className="w-3.5 h-3.5 text-violet-400" />
               {isAirdropping ? 'Airdropping...' : '+1.0 SOL'}

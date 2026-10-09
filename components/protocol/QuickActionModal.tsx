@@ -219,7 +219,7 @@ export function QuickActionModal({
         {actionType === 'inspect' && (
           <div className="space-y-4">
             {/* Status and summary */}
-            <div className="p-3.5 bg-[#141416] border border-[#202024] rounded-xl space-y-2">
+            <div className="p-3.5 bg-[#000000] border border-[#26262a] rounded-xl space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-neutral-400">STATE:</span>
                 {milestone ? (
@@ -247,7 +247,7 @@ export function QuickActionModal({
               <span className="text-[10px] text-neutral-400 uppercase tracking-wider block font-semibold">
                 On-Chain Accounts & Derived PDAs
               </span>
-              <div className="bg-[#141416] border border-[#202024] rounded-xl p-3 space-y-2 text-[11px]">
+              <div className="bg-[#000000] border border-[#26262a] rounded-xl p-3 space-y-2 text-[11px]">
                 <div className="flex items-center justify-between">
                   <span className="text-neutral-400">Vault PDA:</span>
                   <div className="flex items-center gap-1.5">
@@ -306,7 +306,7 @@ export function QuickActionModal({
                   {milestone.dodCriteria.map((crit, idx) => (
                     <div
                       key={idx}
-                      className="p-2.5 rounded-xl bg-[#141416] border border-[#202024] flex items-start gap-2"
+                      className="p-2.5 rounded-xl bg-[#000000] border border-[#26262a] flex items-start gap-2"
                     >
                       <span className="text-emerald-400 font-bold">✓</span>
                       <span className="text-neutral-300 text-[11px] leading-relaxed">{crit}</span>
@@ -322,7 +322,7 @@ export function QuickActionModal({
                 <span className="text-[10px] text-neutral-400 uppercase tracking-wider block font-semibold">
                   Submitted Evidence Record
                 </span>
-                <div className="p-3 bg-[#141416] border border-[#202024] rounded-xl space-y-2 text-[11px]">
+                <div className="p-3 bg-[#000000] border border-[#26262a] rounded-xl space-y-2 text-[11px]">
                   <div className="flex justify-between">
                     <span className="text-neutral-400">Evidence Hash:</span>
                     <span className="text-violet-300 font-mono">{truncateAddress(milestone.evidence.evidenceHash, 6)}</span>
@@ -413,7 +413,7 @@ export function QuickActionModal({
         {/* FUND ESCROW */}
         {actionType === 'fund' && (
           <div className="space-y-4">
-            <div className="p-4 bg-[#141416] border border-[#202024] rounded-xl space-y-2.5">
+            <div className="p-4 bg-[#000000] border border-[#26262a] rounded-xl space-y-2.5">
               <div className="flex justify-between">
                 <span className="text-neutral-400">AGREEMENT:</span>
                 <span className="font-bold text-neutral-200 truncate max-w-[200px]">{agreement.title}</span>
@@ -465,7 +465,7 @@ export function QuickActionModal({
         {/* SUBMIT EVIDENCE */}
         {actionType === 'submit_evidence' && milestone && (
           <div className="space-y-3.5">
-            <div className="p-3 bg-[#141416] border border-[#202024] rounded-xl text-[11px] flex items-center justify-between">
+            <div className="p-3 bg-[#000000] border border-[#26262a] rounded-xl text-[11px] flex items-center justify-between">
               <div>
                 <span className="text-neutral-400 block text-[10px]">TARGET MILESTONE:</span>
                 <span className="font-semibold text-neutral-200">{milestone.title}</span>
@@ -486,7 +486,7 @@ export function QuickActionModal({
                     setMetadataUri('https://arweave.net/tx_contract_audit_report_v1.tar.gz');
                     setEvidenceNotes('Completed and passed 100% tests against committed DoD criteria.');
                   }}
-                  className="px-2 py-1 rounded-lg bg-[#141416] hover:bg-violet-900/30 text-[10px] text-neutral-300 hover:text-violet-300 border border-[#26262a]"
+                  className="px-2 py-1 rounded-lg bg-[#000000] hover:bg-violet-900/30 text-[10px] text-neutral-300 hover:text-violet-300 border border-[#26262a]"
                 >
                   🐙 PR #88 Merged
                 </button>
@@ -497,7 +497,7 @@ export function QuickActionModal({
                     setMetadataUri('https://ipfs.io/ipfs/bafybeic7...audit_artifacts');
                     setEvidenceNotes('Slither and Trident invariant test suite executed successfully.');
                   }}
-                  className="px-2 py-1 rounded-lg bg-[#141416] hover:bg-violet-900/30 text-[10px] text-neutral-300 hover:text-violet-300 border border-[#26262a]"
+                  className="px-2 py-1 rounded-lg bg-[#000000] hover:bg-violet-900/30 text-[10px] text-neutral-300 hover:text-violet-300 border border-[#26262a]"
                 >
                   📦 IPFS Artifacts
                 </button>
@@ -526,7 +526,7 @@ export function QuickActionModal({
             />
 
             {computedEvidenceHash && (
-              <div className="p-2 bg-[#141416] border border-[#202024] rounded-xl flex items-center justify-between text-[11px]">
+              <div className="p-2 bg-[#000000] border border-[#26262a] rounded-xl flex items-center justify-between text-[11px]">
                 <span className="text-neutral-400">Canonical SHA-256:</span>
                 <span className="font-mono text-violet-300">
                   {truncateAddress(computedEvidenceHash, 6)}
@@ -554,7 +554,7 @@ export function QuickActionModal({
         {/* VERIFICATION ENGINE */}
         {actionType === 'verify' && milestone && (
           <div className="space-y-3.5">
-            <div className="p-3 bg-[#141416] border border-[#202024] rounded-xl text-[11px] flex items-center justify-between">
+            <div className="p-3 bg-[#000000] border border-[#26262a] rounded-xl text-[11px] flex items-center justify-between">
               <div>
                 <span className="text-neutral-400 block text-[10px]">AUDITING MILESTONE:</span>
                 <span className="font-semibold text-neutral-200">{milestone.title}</span>
@@ -578,7 +578,7 @@ export function QuickActionModal({
                     });
                     setCheckedCriteria(all);
                   }}
-                  className="text-[10px] text-violet-300 bg-[#141416] hover:bg-violet-900/40 px-2 py-0.5 rounded-lg border border-violet-500/30 font-bold"
+                  className="text-[10px] text-violet-300 bg-[#000000] hover:bg-violet-900/40 px-2 py-0.5 rounded-lg border border-violet-500/30 font-bold"
                 >
                   ⚡ Pass All (1-Click)
                 </button>
@@ -592,8 +592,8 @@ export function QuickActionModal({
                   }
                   className={`p-2.5 border rounded-xl cursor-pointer flex items-center gap-2.5 transition-all ${
                     checkedCriteria[idx]
-                      ? 'bg-[#141416] border-violet-500/60 text-neutral-100 shadow-sm'
-                      : 'bg-[#0d0d0f] border-[#26262a] text-neutral-400 hover:border-[#383840]'
+                      ? 'bg-[#000000] border-violet-500/60 text-neutral-100 shadow-sm'
+                      : 'bg-[#000000] border-[#26262a] text-neutral-400 hover:border-[#383840]'
                   }`}
                 >
                   <div
@@ -637,7 +637,7 @@ export function QuickActionModal({
         {/* RELEASE SETTLEMENT */}
         {actionType === 'release' && milestone && (
           <div className="space-y-4">
-            <div className="p-4 bg-[#141416] border border-[#202024] rounded-xl space-y-2.5">
+            <div className="p-4 bg-[#000000] border border-[#26262a] rounded-xl space-y-2.5">
               <div className="flex justify-between">
                 <span className="text-neutral-400">DISBURSAL AMOUNT:</span>
                 <span className="font-bold text-emerald-400 text-base">

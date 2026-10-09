@@ -161,9 +161,9 @@ export function CreateAgreementDrawer({ isOpen, onClose, onSuccess }: CreateAgre
       <div className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity" onClick={onClose} />
 
       {/* Drawer */}
-      <div className="fixed inset-x-0 bottom-0 md:inset-x-auto md:right-0 md:top-0 md:h-full w-full md:w-[540px] bg-[#0a0a0c] border-t md:border-t-0 md:border-l border-[#26262a] rounded-t-3xl md:rounded-none z-50 max-h-[92vh] md:max-h-full flex flex-col shadow-2xl animate-in slide-in-from-bottom md:slide-in-from-right duration-200">
+      <div className="fixed inset-x-0 bottom-0 md:inset-x-auto md:right-0 md:top-0 md:h-full w-full md:w-[540px] bg-[#000000] border-t md:border-t-0 md:border-l border-[#26262a] rounded-t-3xl md:rounded-none z-50 max-h-[92vh] md:max-h-full flex flex-col shadow-2xl animate-in slide-in-from-bottom md:slide-in-from-right duration-200">
         {/* Header with Done Logo */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#26262a] bg-[#0d0d0f]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#26262a] bg-[#000000]">
           <div className="flex items-center gap-3">
             <DoneLogo className="w-7 h-7" />
             <div>
@@ -178,14 +178,14 @@ export function CreateAgreementDrawer({ isOpen, onClose, onSuccess }: CreateAgre
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-neutral-400 hover:text-white rounded-lg hover:bg-[#1a1a1e] transition-colors"
+            className="p-1.5 text-neutral-400 hover:text-white rounded-lg hover:bg-neutral-900 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Content Body */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-5">
+        <div className="flex-1 overflow-y-auto p-6 space-y-5 bg-[#000000]">
           {error && (
             <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs">
               {error}
@@ -204,7 +204,7 @@ export function CreateAgreementDrawer({ isOpen, onClose, onSuccess }: CreateAgre
                     <button
                       key={tpl.name}
                       onClick={() => applyTemplate(tpl)}
-                      className="px-2.5 py-2 rounded-xl bg-[#141416] hover:bg-violet-950/30 hover:border-violet-500/40 border border-[#26262a] text-left transition-colors text-[11px]"
+                      className="px-2.5 py-2 rounded-xl bg-[#000000] hover:bg-violet-950/30 hover:border-violet-500/40 border border-[#26262a] text-left transition-colors text-[11px]"
                     >
                       <span className="font-semibold text-white block truncate">{tpl.name}</span>
                       <span className="text-violet-400 text-[10px]">${formatUsdc(tpl.budget)}</span>
@@ -222,7 +222,7 @@ export function CreateAgreementDrawer({ isOpen, onClose, onSuccess }: CreateAgre
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g. Audit Assessment"
-                  className="bg-[#141416] border-[#26262a] text-sm"
+                  className="bg-[#000000] border-[#26262a] text-sm"
                 />
               </div>
 
@@ -246,7 +246,7 @@ export function CreateAgreementDrawer({ isOpen, onClose, onSuccess }: CreateAgre
                   value={workerAddress}
                   onChange={(e) => setWorkerAddress(e.target.value)}
                   placeholder={publicKeyString ? `Default: ${publicKeyString.slice(0, 12)}...` : 'Solana PublicKey (base58)'}
-                  className="bg-[#141416] border-[#26262a] text-xs font-mono"
+                  className="bg-[#000000] border-[#26262a] text-xs font-mono"
                 />
               </div>
 
@@ -279,7 +279,7 @@ export function CreateAgreementDrawer({ isOpen, onClose, onSuccess }: CreateAgre
 
                 <div className="space-y-2.5">
                   {milestones.map((m, idx) => (
-                    <div key={idx} className="p-3 bg-[#141416] rounded-xl border border-[#26262a] space-y-2">
+                    <div key={idx} className="p-3 bg-[#000000] rounded-xl border border-[#26262a] space-y-2">
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-xs font-bold text-violet-400">#{idx + 1}</span>
                         <input
@@ -303,7 +303,7 @@ export function CreateAgreementDrawer({ isOpen, onClose, onSuccess }: CreateAgre
                               updated[idx].amountUsdc = Math.round(val * 1e6);
                               setMilestones(updated);
                             }}
-                            className="w-16 bg-[#0d0d0f] border border-[#26262a] rounded px-1.5 py-0.5 text-right font-semibold text-white text-xs outline-none focus:border-violet-500"
+                            className="w-16 bg-[#000000] border border-[#26262a] rounded px-1.5 py-0.5 text-right font-semibold text-white text-xs outline-none focus:border-violet-500"
                           />
                         </div>
                       </div>
@@ -320,7 +320,7 @@ export function CreateAgreementDrawer({ isOpen, onClose, onSuccess }: CreateAgre
           ) : (
             /* Step 2: Confirm & Authorize */
             <div className="space-y-4 py-2">
-              <div className="flex flex-col items-center justify-center p-6 rounded-2xl bg-[#141416] border border-[#26262a] text-center">
+              <div className="flex flex-col items-center justify-center p-6 rounded-2xl bg-[#000000] border border-[#26262a] text-center">
                 <DoneLogo className="w-14 h-14 mb-3" />
                 <h3 className="text-base font-bold text-white mb-1">{title}</h3>
                 <p className="text-xs text-neutral-400 mb-3">{milestones.length} Milestones • Deterministic Payouts</p>
@@ -329,21 +329,21 @@ export function CreateAgreementDrawer({ isOpen, onClose, onSuccess }: CreateAgre
               </div>
 
               <div className="space-y-2 text-xs">
-                <div className="flex justify-between items-center p-3 rounded-xl bg-[#141416] border border-[#26262a]">
+                <div className="flex justify-between items-center p-3 rounded-xl bg-[#000000] border border-[#26262a]">
                   <span className="text-neutral-400">Sponsor:</span>
                   <span className="text-violet-300 font-mono text-[11px]">
                     {publicKeyString ? `${publicKeyString.slice(0, 10)}...${publicKeyString.slice(-6)}` : 'Connected Wallet'}
                   </span>
                 </div>
 
-                <div className="flex justify-between items-center p-3 rounded-xl bg-[#141416] border border-[#26262a]">
+                <div className="flex justify-between items-center p-3 rounded-xl bg-[#000000] border border-[#26262a]">
                   <span className="text-neutral-400">Beneficiary:</span>
                   <span className="text-violet-300 font-mono text-[11px]">
                     {workerAddress ? `${workerAddress.slice(0, 10)}...${workerAddress.slice(-6)}` : 'Active Wallet'}
                   </span>
                 </div>
 
-                <div className="flex justify-between items-center p-3 rounded-xl bg-[#141416] border border-[#26262a]">
+                <div className="flex justify-between items-center p-3 rounded-xl bg-[#000000] border border-[#26262a]">
                   <span className="text-neutral-400">Escrow Security:</span>
                   <span className="text-emerald-400 font-semibold flex items-center gap-1">
                     <Lock className="w-3 h-3" /> Non-Custodial Vault PDA
@@ -355,7 +355,7 @@ export function CreateAgreementDrawer({ isOpen, onClose, onSuccess }: CreateAgre
         </div>
 
         {/* Drawer Footer Actions */}
-        <div className="p-5 border-t border-[#26262a] bg-[#0d0d0f] flex items-center justify-between gap-3">
+        <div className="p-5 border-t border-[#26262a] bg-[#000000] flex items-center justify-between gap-3">
           {step === 1 ? (
             <>
               <button

@@ -136,7 +136,7 @@ export default function AgreementsExplorerPage() {
 
       {/* Controls */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        <div className="flex items-center bg-[#0d0d0f] border border-[#26262a] p-1 rounded-xl">
+        <div className="flex items-center bg-[#000000] border border-[#26262a] p-1 rounded-xl">
           {filterOptions.map((opt) => (
             <button
               key={opt.id}
@@ -159,14 +159,14 @@ export default function AgreementsExplorerPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Filter by title or address..."
-            className="w-full sm:w-64 bg-[#0d0d0f] border border-[#26262a] rounded-xl pl-9 pr-3.5 py-2 text-xs text-neutral-100 placeholder-neutral-500 focus:outline-none focus:border-violet-500"
+            className="w-full sm:w-64 bg-[#000000] border border-[#26262a] rounded-xl pl-9 pr-3.5 py-2 text-xs text-neutral-100 placeholder-neutral-500 focus:outline-none focus:border-violet-500"
           />
         </div>
       </div>
 
       {/* List */}
       {agreements.length === 0 ? (
-        <div className="p-10 text-center bg-[#0d0d0f] border border-[#26262a] rounded-3xl space-y-4">
+        <div className="p-10 text-center bg-[#000000] border border-[#26262a] rounded-3xl space-y-4">
           <DoneLogo className="w-14 h-14 mx-auto" />
           <div className="space-y-1">
             <h3 className="text-base font-bold text-white">No Escrow Agreements</h3>
@@ -183,7 +183,7 @@ export default function AgreementsExplorerPage() {
           </Button>
         </div>
       ) : filteredAgreements.length === 0 ? (
-        <div className="p-8 text-center bg-[#0d0d0f] border border-[#26262a] rounded-2xl text-xs text-neutral-400">
+        <div className="p-8 text-center bg-[#000000] border border-[#26262a] rounded-2xl text-xs text-neutral-400">
           No agreements matching this search.
         </div>
       ) : (
@@ -205,7 +205,7 @@ export default function AgreementsExplorerPage() {
             return (
               <div
                 key={agreement.publicKey}
-                className="p-5 bg-[#0d0d0f] hover:bg-[#121215] border border-[#26262a] hover:border-violet-500/40 rounded-2xl transition-all space-y-3"
+                className="p-5 bg-[#000000] hover:bg-neutral-950 border border-[#26262a] hover:border-violet-500/40 rounded-2xl transition-all space-y-3"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div className="space-y-1">
@@ -235,7 +235,7 @@ export default function AgreementsExplorerPage() {
                   </div>
                 </div>
 
-                <div className="w-full h-1.5 bg-[#1a1a1e] rounded-full overflow-hidden">
+                <div className="w-full h-1.5 bg-neutral-900 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-violet-500 transition-all duration-300"
                     style={{ width: `${progressPct}%` }}
@@ -255,7 +255,7 @@ export default function AgreementsExplorerPage() {
                             ? 'bg-violet-950/30 text-violet-300 border-violet-500/30 font-bold'
                             : m.state === MilestoneState.EVIDENCE_SUBMITTED
                             ? 'bg-amber-950/30 text-amber-300 border-amber-500/30'
-                            : 'bg-[#141416] text-neutral-400 border-[#26262a]'
+                            : 'bg-[#000000] text-neutral-400 border-[#26262a]'
                         }`}
                       >
                         #{idx + 1}: ${formatUsdc(m.amountUsdc)}
@@ -313,7 +313,7 @@ export default function AgreementsExplorerPage() {
 
                     <Link
                       href={`/agreements/${agreement.publicKey}`}
-                      className="px-3 py-1.5 rounded-xl bg-[#141416] hover:bg-[#1a1a1e] border border-[#26262a] text-neutral-300 text-xs font-semibold inline-flex items-center gap-1"
+                      className="px-3 py-1.5 rounded-xl bg-[#000000] hover:bg-neutral-900 border border-[#26262a] text-neutral-300 text-xs font-semibold inline-flex items-center gap-1"
                     >
                       Details <ArrowRight className="w-3 h-3" />
                     </Link>
