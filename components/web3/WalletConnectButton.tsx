@@ -23,6 +23,9 @@ export function WalletConnectButton() {
   } = useWallet();
 
   const [isOpen, setIsOpen] = useState(false);
+  const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
+  const [importAddrInput, setImportAddrInput] = useState('');
+  const [showImportField, setShowImportField] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isAirdropping, setIsAirdropping] = useState(false);
   const [faucetSuccess, setFaucetSuccess] = useState(false);
@@ -46,18 +49,171 @@ export function WalletConnectButton() {
     setTimeout(() => setFaucetSuccess(false), 2000);
   };
 
+  const handleConnectOption = async (option: 'phantom' | 'solflare' | 'keypair' | 'custom') => {
+    if (option === 'custom') {
+      if (!importAddrInput.trim()) return;
+      await connect('custom', importAddrInput.trim());
+    } else {
+      await connect(option);
+    }
+    setIsConnectModalOpen(false);
+    setShowImportField(false);
+  };
+
   if (!connected) {
     return (
-      <Button
-        variant="primary"
-        size="sm"
-        isLoading={isConnecting}
-        onClick={() => connect()}
-        className="flex items-center gap-2"
-      >
-        <Wallet className="w-3.5 h-3.5" />
-        Connect Wallet
-      </Button>
+      <>
+        <Button
+          variant="primary"
+          size="sm"
+          isLoading={isConnecting}
+          onClick={() => setIsConnectModalOpen(true)}
+          className="flex items-center gap-2"
+        >
+          <Wallet className="w-3.5 h-3.5" />
+          <span>Connect Wallet</span>
+        </Button>
+
+        {/* Connect Wallet Selection Modal */}
+        {isConnectModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-150">
+            <div className="w-full max-w-md bg-[#000000] border border-[#26262a] rounded-2xl p-5 shadow-2xl font-mono text-xs space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-[#26262a]">
+                <div className="flex items-center gap-2.5">
+                  <DoneLogo className="w-6 h-6" />
+                  <div>
+                    <h3 className="font-bold text-sm text-white">Connect Solana Wallet</h3>
+                    <p className="text-[11px] text-neutral-400">Select a provider to interact with DONE Escrow</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsConnectModalOpen(false)}
+                  className="p-1.5 text-neutral-400 hover:text-white rounded-lg hover:bg-neutral-900 transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                {/* Phantom */}
+                <button
+                  type="button"
+                  onClick={() => handleConnectOption('phantom')}
+                  className="w-full p-3.5 bg-[#000000] hover:bg-neutral-950 border border-[#26262a] hover:border-violet-500/50 rounded-xl flex items-center justify-between transition-all group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-violet-600/20 border border-violet-500/30 flex items-center justify-center text-violet-400 font-bold text-xs">
+                      PH
+                    </div>
+                    <div className="text-left">
+                      <span className="font-semibold text-white block group-hover:text-violet-300">
+                        Phantom Wallet
+                      </span>
+                      <span className="text-[10px] text-neutral-400">
+                        Browser extension or mobile adapter
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] text-violet-400 group-hover:translate-x-0.5 transition-transform">
+                    Connect →
+                  </span>
+                </button>
+
+                {/* Solflare */}
+                <button
+                  type="button"
+                  onClick={() => handleConnectOption('solflare')}
+                  className="w-full p-3.5 bg-[#000000] hover:bg-neutral-950 border border-[#26262a] hover:border-violet-500/50 rounded-xl flex items-center justify-between transition-all group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 font-bold text-xs">
+                      SF
+                    </div>
+                    <div className="text-left">
+                      <span className="font-semibold text-white block group-hover:text-amber-300">
+                        Solflare Wallet
+                      </span>
+                      <span className="text-[10px] text-neutral-400">
+                        Solana native web & extension wallet
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] text-amber-400 group-hover:translate-x-0.5 transition-transform">
+                    Connect →
+                  </span>
+                </button>
+
+                {/* Devnet Session Keypair */}
+                <button
+                  type="button"
+                  onClick={() => handleConnectOption('keypair')}
+                  className="w-full p-3.5 bg-[#000000] hover:bg-neutral-950 border border-[#26262a] hover:border-violet-500/50 rounded-xl flex items-center justify-between transition-all group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold text-xs">
+                      DEV
+                    </div>
+                    <div className="text-left">
+                      <span className="font-semibold text-white block group-hover:text-emerald-300">
+                        Devnet Test Keypair
+                      </span>
+                      <span className="text-[10px] text-neutral-400">
+                        Instant session keypair with Solana Devnet access
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] text-emerald-400 group-hover:translate-x-0.5 transition-transform">
+                    Connect →
+                  </span>
+                </button>
+
+                {/* Import Address */}
+                <div className="pt-1">
+                  {!showImportField ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowImportField(true)}
+                      className="text-[11px] text-neutral-400 hover:text-violet-300 underline py-1 block"
+                    >
+                      Or import custom Solana address...
+                    </button>
+                  ) : (
+                    <div className="p-3 bg-[#000000] border border-[#26262a] rounded-xl space-y-2">
+                      <label className="text-[10px] uppercase font-bold text-neutral-400 block">
+                        Solana Base58 Address
+                      </label>
+                      <input
+                        type="text"
+                        value={importAddrInput}
+                        onChange={(e) => setImportAddrInput(e.target.value)}
+                        placeholder="e.g. 7vW...4rT"
+                        className="w-full bg-[#000000] border border-[#26262a] rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-violet-500"
+                      />
+                      <div className="flex justify-end gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => setShowImportField(false)}
+                          className="px-2.5 py-1 text-neutral-400 text-[11px] hover:text-white"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleConnectOption('custom')}
+                          disabled={!importAddrInput.trim()}
+                          className="px-3 py-1 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white rounded-lg text-[11px] font-semibold"
+                        >
+                          Import & Connect
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </>
     );
   }
 

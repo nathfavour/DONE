@@ -16,7 +16,7 @@ export interface WalletContextType {
   cluster: string;
   currentSlot: number;
   rpcLatencyMs: number;
-  connect: () => Promise<void>;
+  connect: (preferred?: 'phantom' | 'solflare' | 'keypair' | 'custom', customAddr?: string) => Promise<void>;
   disconnect: () => void;
   importAddress: (address: string) => boolean;
   requestDevnetSolAirdrop: () => Promise<boolean>;
@@ -35,18 +35,20 @@ const STORAGE_USDC_BALANCE = 'done_wallet_usdc_balance_live';
 
 export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [isConnecting, setIsConnecting] = useState<boolean>(false);
-  const [walletName, setWalletName] = useState<string>('Solana Devnet');
+  const [walletName, setWalletName] = useState<string>('');
   const [isLiveExtension, setIsLiveExtension] = useState<boolean>(false);
-  const [solBalance, setSolBalance] = useState<number>(2.5);
+  const [solBalance, setSolBalance] = useState<number>(0);
 
   const [connected, setConnected] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return true;
+    if (typeof window === 'undefined') return false;
     const saved = localStorage.getItem(STORAGE_CONNECTED);
-    return saved !== 'false';
+    return saved === 'true';
   });
 
   const [publicKey, setPublicKey] = useState<PublicKey | null>(() => {
     if (typeof window === 'undefined') return null;
+    const isConn = localStorage.getItem(STORAGE_CONNECTED) === 'true';
+    if (!isConn) return null;
     try {
       const customAddr = localStorage.getItem(STORAGE_CUSTOM_ADDRESS);
       if (customAddr) return new PublicKey(customAddr);
@@ -56,10 +58,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         const secret = Uint8Array.from(JSON.parse(saved));
         return Keypair.fromSecretKey(secret).publicKey;
       }
-
-      const kp = Keypair.generate();
-      localStorage.setItem(STORAGE_LIVE_KEYPAIR, JSON.stringify(Array.from(kp.secretKey)));
-      return kp.publicKey;
+      return null;
     } catch {
       return null;
     }
@@ -68,13 +67,15 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [usdcBalance, setUsdcBalance] = useState<number>(() => {
     if (typeof window !== 'undefined') {
       try {
+        const isConn = localStorage.getItem(STORAGE_CONNECTED) === 'true';
+        if (!isConn) return 0;
         const saved = localStorage.getItem(STORAGE_USDC_BALANCE);
         if (saved) return Number(saved);
       } catch {
         // ignore
       }
     }
-    return 10_000_000_000; // 10,000 live Devnet USDC
+    return 0;
   });
 
   const [currentSlot, setCurrentSlot] = useState<number>(298419203);
@@ -116,12 +117,26 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   }, [connected, publicKey]);
 
   // Connect to real on-chain wallet
-  const connect = useCallback(async () => {
+  const connect = useCallback(async (preferred?: 'phantom' | 'solflare' | 'keypair' | 'custom', customAddr?: string) => {
     setIsConnecting(true);
     try {
+      if (preferred === 'custom' && customAddr) {
+        const pk = new PublicKey(customAddr.trim());
+        setPublicKey(pk);
+        setWalletName('Imported Address');
+        setIsLiveExtension(false);
+        setConnected(true);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(STORAGE_CUSTOM_ADDRESS, pk.toBase58());
+          localStorage.setItem(STORAGE_CONNECTED, 'true');
+        }
+        return;
+      }
+
       const solanaProvider = typeof window !== 'undefined' ? (window as unknown as { solana?: { isPhantom?: boolean; connect: () => Promise<{ publicKey: { toString: () => string } }> } }).solana : undefined;
+      const solflareProvider = typeof window !== 'undefined' ? (window as unknown as { solflare?: { connect: () => Promise<void>; publicKey: { toString: () => string } } }).solflare : undefined;
       
-      if (solanaProvider && typeof solanaProvider.connect === 'function') {
+      if ((preferred === 'phantom' || !preferred) && solanaProvider && typeof solanaProvider.connect === 'function') {
         const resp = await solanaProvider.connect();
         const pk = new PublicKey(resp.publicKey.toString());
         setPublicKey(pk);
@@ -132,39 +147,46 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      if (typeof window !== 'undefined') {
-        const customAddr = localStorage.getItem(STORAGE_CUSTOM_ADDRESS);
-        if (customAddr) {
-          try {
-            const pk = new PublicKey(customAddr);
-            setPublicKey(pk);
-            setWalletName('Devnet Wallet');
-            setIsLiveExtension(false);
-            setConnected(true);
-            localStorage.setItem(STORAGE_CONNECTED, 'true');
-            return;
-          } catch {
-            // ignore
-          }
-        }
+      if (preferred === 'solflare' && solflareProvider && typeof solflareProvider.connect === 'function') {
+        await solflareProvider.connect();
+        const pk = new PublicKey(solflareProvider.publicKey.toString());
+        setPublicKey(pk);
+        setWalletName('Solflare');
+        setIsLiveExtension(true);
+        setConnected(true);
+        if (typeof window !== 'undefined') localStorage.setItem(STORAGE_CONNECTED, 'true');
+        return;
+      }
 
+      // Default or 'keypair': Devnet session keypair
+      if (typeof window !== 'undefined') {
         const saved = localStorage.getItem(STORAGE_LIVE_KEYPAIR);
+        let pk: PublicKey;
         if (saved) {
           const secret = Uint8Array.from(JSON.parse(saved));
-          setPublicKey(Keypair.fromSecretKey(secret).publicKey);
+          pk = Keypair.fromSecretKey(secret).publicKey;
         } else {
           const kp = Keypair.generate();
           localStorage.setItem(STORAGE_LIVE_KEYPAIR, JSON.stringify(Array.from(kp.secretKey)));
-          setPublicKey(kp.publicKey);
+          pk = kp.publicKey;
         }
+        setPublicKey(pk);
         setWalletName('Devnet Keypair');
         setIsLiveExtension(false);
         setConnected(true);
         localStorage.setItem(STORAGE_CONNECTED, 'true');
+
+        const savedUsdc = localStorage.getItem(STORAGE_USDC_BALANCE);
+        if (savedUsdc) {
+          setUsdcBalance(Number(savedUsdc));
+        } else {
+          // Initialize test USDC when first connecting keypair
+          setUsdcBalance(10_000_000_000);
+          localStorage.setItem(STORAGE_USDC_BALANCE, '10000000000');
+        }
       }
     } catch (err) {
-      console.warn('Wallet connection fell back to on-chain keypair:', err);
-      setConnected(true);
+      console.warn('Wallet connection error:', err);
     } finally {
       setIsConnecting(false);
     }
@@ -173,6 +195,9 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const disconnect = useCallback(() => {
     setConnected(false);
     setPublicKey(null);
+    setWalletName('');
+    setSolBalance(0);
+    setUsdcBalance(0);
     setIsLiveExtension(false);
     if (typeof window !== 'undefined') {
       localStorage.setItem(STORAGE_CONNECTED, 'false');

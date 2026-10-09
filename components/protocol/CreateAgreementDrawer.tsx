@@ -58,22 +58,17 @@ export function CreateAgreementDrawer({ isOpen, onClose, onSuccess }: CreateAgre
   const { publicKey, publicKeyString } = useWallet();
 
   const [step, setStep] = useState<1 | 2>(1); // 1 = Details & Milestones, 2 = Confirm & Authorize
-  const [title, setTitle] = useState('Protocol Engineering Milestone');
+  const [title, setTitle] = useState('');
   const [workerAddress, setWorkerAddress] = useState('');
-  const [termsText, setTermsText] = useState('Standard verified escrow deliverables under DONE Protocol.');
+  const [termsText, setTermsText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [milestones, setMilestones] = useState<Array<{ title: string; amountUsdc: number; dodCriteria: string[] }>>([
     {
-      title: 'Phase 1: Architecture & Deliverable Spec',
-      amountUsdc: 2_500_000_000,
-      dodCriteria: ['Architecture RFC approved', 'Test matrix passed'],
-    },
-    {
-      title: 'Phase 2: Final Verification & Production Deployment',
-      amountUsdc: 2_500_000_000,
-      dodCriteria: ['Production build signed', 'Final verification criteria met'],
+      title: '',
+      amountUsdc: 1_000_000_000,
+      dodCriteria: [''],
     },
   ]);
 

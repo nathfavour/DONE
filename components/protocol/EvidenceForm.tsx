@@ -21,11 +21,9 @@ interface EvidenceFormProps {
 }
 
 export function EvidenceForm({ agreementKey, milestone, onExecute }: EvidenceFormProps) {
-  const [metadataUri, setMetadataUri] = useState('https://arweave.net/tx_deliverable_artifact_v1.tar.gz');
+  const [metadataUri, setMetadataUri] = useState('');
   const [notes, setNotes] = useState('');
-  const [deliverableLinks, setDeliverableLinks] = useState<string[]>([
-    'https://github.com/project/core/pull/101',
-  ]);
+  const [deliverableLinks, setDeliverableLinks] = useState<string[]>(['']);
   const [liveHash, setLiveHash] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 

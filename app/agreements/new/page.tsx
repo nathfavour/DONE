@@ -29,12 +29,11 @@ export default function CreateAgreementPage() {
   const { publicKey, publicKeyString } = useWallet();
   const { txState, execute, reset: resetTx, isOpen: isTxOpen } = useTransactionExecution();
 
-  const [title, setTitle] = useState('Protocol Milestone Agreement');
+  const [title, setTitle] = useState('');
   const [workerAddress, setWorkerAddress] = useState('');
-  const [termsText, setTermsText] = useState('Standard milestone deliverables under DONE Protocol.');
+  const [termsText, setTermsText] = useState('');
   const [milestones, setMilestones] = useState([
-    { title: 'Milestone 1: Deliverable Build', amount: 2500, dod: ['Verified test suite', 'PR merged'] },
-    { title: 'Milestone 2: Production Release', amount: 2500, dod: ['Live deployment', 'Sign-off'] },
+    { title: '', amount: 1000, dod: [''] },
   ]);
   const [step, setStep] = useState<1 | 2>(1);
   const [error, setError] = useState<string | null>(null);
