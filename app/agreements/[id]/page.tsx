@@ -134,7 +134,7 @@ export default function AgreementDetailPage() {
             href={getExplorerUrl(agreement.fundingTx, 'tx')}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs text-cyan-400 hover:underline inline-flex items-center gap-1"
+            className="text-xs text-violet-400 hover:underline inline-flex items-center gap-1"
           >
             <span>Escrow Vault Tx</span>
             <ExternalLink className="w-3 h-3" />
@@ -143,7 +143,7 @@ export default function AgreementDetailPage() {
       </div>
 
       {/* 3.4 Agreement Summary Header */}
-      <Card className="space-y-6">
+      <Card className="space-y-5">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1.5 flex-1">
             <div className="flex flex-wrap items-center gap-2.5">
@@ -191,7 +191,7 @@ export default function AgreementDetailPage() {
           </div>
           <div className="w-full h-2 bg-[#141416] rounded-full overflow-hidden">
             <div
-              className="h-full bg-white rounded-full transition-all duration-300"
+              className="h-full bg-gradient-to-r from-violet-600 to-violet-400 rounded-full transition-all duration-300"
               style={{ width: `${percentSettled}%` }}
             />
           </div>
@@ -209,7 +209,7 @@ export default function AgreementDetailPage() {
           </div>
           <div className="p-3 bg-[#141416] border border-[#202024] rounded-xl">
             <span className="text-[10px] text-neutral-500 uppercase block mb-0.5">VAULT PDA</span>
-            <span className="text-cyan-400 font-mono text-xs">{truncateAddress(agreement.vaultPda, 6)}</span>
+            <span className="text-violet-300 font-mono text-xs">{truncateAddress(agreement.vaultPda, 6)}</span>
           </div>
           <div className="p-3 bg-[#141416] border border-[#202024] rounded-xl">
             <span className="text-[10px] text-neutral-500 uppercase block mb-0.5">TERMS SHA-256</span>
@@ -218,29 +218,29 @@ export default function AgreementDetailPage() {
         </div>
       </Card>
 
-      {/* 3.4 Milestone Sequential Pipeline: Stacked interactive cards (rounded-2xl, #0d0d0f) */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between border-b border-[#26262a] pb-3">
-          <h2 className="text-sm font-bold text-white uppercase tracking-wider">
-            Milestone Sequential Pipeline ({agreement.milestones.length})
+      {/* 3.4 Milestone Sequential Pipeline: Stacked interactive cards */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between border-b border-[#26262a] pb-2.5">
+          <h2 className="text-xs font-bold text-white uppercase tracking-wider">
+            Milestone Pipeline ({agreement.milestones.length})
           </h2>
-          <span className="text-xs text-neutral-400">Click any milestone to open Right Sidebar inspection</span>
+          <span className="text-[11px] text-neutral-400">Click any milestone to inspect</span>
         </div>
 
         <div className="space-y-3">
           {agreement.milestones.map((milestone) => (
             <div
               key={milestone.publicKey}
-              className="bg-[#0d0d0f] border border-[#26262a] hover:border-neutral-500 rounded-2xl p-5 transition-all space-y-4"
+              className="bg-[#0d0d0f] border border-[#26262a] hover:border-violet-500/40 rounded-2xl p-4 sm:p-5 transition-all space-y-3.5"
             >
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 {/* Left: Index, Title, Status, Criteria */}
                 <div className="space-y-1.5 flex-1 cursor-pointer" onClick={() => openDrawer('inspect', milestone)}>
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="px-2 py-0.5 rounded-lg bg-[#141416] border border-[#202024] text-xs font-bold text-neutral-300">
-                      M#{milestone.index}
+                    <span className="px-2 py-0.5 rounded-lg bg-[#141416] border border-violet-500/30 text-xs font-bold text-violet-300">
+                      #{milestone.index + 1}
                     </span>
-                    <h3 className="text-sm sm:text-base font-bold text-white">{milestone.title}</h3>
+                    <h3 className="text-sm sm:text-base font-bold text-white hover:text-violet-300 transition-colors">{milestone.title}</h3>
                     <MilestoneStateBadge state={milestone.state} />
                     <VerificationTypeBadge type={milestone.verificationType} />
                   </div>
@@ -248,7 +248,7 @@ export default function AgreementDetailPage() {
                   <p className="text-xs text-neutral-400">{milestone.description}</p>
 
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-neutral-400 pt-1">
-                    <span>DoD Commit: {truncateAddress(milestone.dodHash, 6)}</span>
+                    <span>DoD: {truncateAddress(milestone.dodHash, 6)}</span>
                     <span>•</span>
                     <span>{milestone.dodCriteria.length} Verifiable Conditions</span>
                     {milestone.settlementTx && (
@@ -258,7 +258,7 @@ export default function AgreementDetailPage() {
                           href={getExplorerUrl(milestone.settlementTx, 'tx')}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-cyan-400 hover:underline inline-flex items-center gap-0.5"
+                          className="text-violet-400 hover:underline inline-flex items-center gap-0.5"
                         >
                           Tx: {truncateAddress(milestone.settlementTx, 4)}
                           <ExternalLink className="w-2.5 h-2.5" />
@@ -274,7 +274,6 @@ export default function AgreementDetailPage() {
                     <div className="text-base sm:text-lg font-bold text-emerald-400">
                       ${formatUsdc(milestone.amountUsdc)} USDC
                     </div>
-                    <span className="text-[10px] text-neutral-500 uppercase">Devnet Escrow</span>
                   </div>
 
                   {/* Contextual Action Button based on state */}
@@ -286,7 +285,7 @@ export default function AgreementDetailPage() {
                         onClick={() => openDrawer('submit_evidence', milestone)}
                       >
                         <UploadCloud className="w-3.5 h-3.5 mr-1.5" />
-                        Submit Evidence
+                        Submit Proof
                       </Button>
                     )}
 
@@ -297,7 +296,7 @@ export default function AgreementDetailPage() {
                         onClick={() => openDrawer('verify', milestone)}
                       >
                         <ShieldCheck className="w-3.5 h-3.5 mr-1.5" />
-                        Run Verification
+                        Verify DoD
                       </Button>
                     )}
 
@@ -306,9 +305,10 @@ export default function AgreementDetailPage() {
                         variant="primary"
                         size="sm"
                         onClick={() => openDrawer('release', milestone)}
+                        className="bg-emerald-500 hover:bg-emerald-400 text-black font-bold"
                       >
                         <Coins className="w-3.5 h-3.5 mr-1.5" />
-                        Release Escrowed USDC
+                        Release Escrow
                       </Button>
                     )}
 
@@ -318,7 +318,7 @@ export default function AgreementDetailPage() {
                         size="sm"
                         onClick={() => openDrawer('inspect', milestone)}
                       >
-                        View Receipt
+                        Receipt
                         <ChevronRight className="w-3.5 h-3.5 ml-1" />
                       </Button>
                     )}

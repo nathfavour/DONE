@@ -140,15 +140,15 @@ export function VerificationCard({
   // 2. If verified, show settlement release trigger
   if (milestone.state === MilestoneState.VERIFIED) {
     return (
-      <Card className="border-cyan-500/30 font-mono">
+      <Card className="border-violet-500/30 font-mono">
         <CardHeader>
-          <div className="flex items-center gap-2 text-cyan-400">
+          <div className="flex items-center gap-2 text-violet-400">
             <ShieldCheck className="w-4 h-4" />
             <h3 className="font-bold text-sm tracking-wider uppercase">
               DoD CRITERIA VERIFIED — SETTLEMENT UNLOCKED
             </h3>
           </div>
-          <span className="text-[11px] text-cyan-300 font-bold">READY FOR DISBURSAL</span>
+          <span className="text-[11px] text-violet-300 font-bold">READY FOR DISBURSAL</span>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-xs text-neutral-400">

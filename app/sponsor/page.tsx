@@ -103,20 +103,20 @@ export default function SponsorDashboardPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#26262a] pb-4">
         <div>
-          <div className="flex items-center gap-2 text-xs text-neutral-400 mb-1">
-            <ShieldCheck className="w-4 h-4 text-white" />
-            <span>CAPITAL SPONSOR PORTFOLIO</span>
+          <div className="flex items-center gap-2 text-xs text-violet-400 mb-1">
+            <ShieldCheck className="w-4 h-4" />
+            <span className="font-bold tracking-wider">CAPITAL SPONSOR</span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-white">Sponsor Escrow Console</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-white">Sponsor Console</h1>
         </div>
 
         <div className="flex items-center gap-3">
           {role !== 'sponsor' && (
             <button
               onClick={() => switchRole('sponsor')}
-              className="text-xs text-cyan-300 hover:underline px-3 py-1.5 rounded-xl border border-[#26262a] bg-[#141416]"
+              className="text-xs text-violet-300 hover:text-white px-3 py-1.5 rounded-xl border border-[#26262a] hover:border-violet-500/40 bg-[#141416] transition-colors"
             >
-              Switch Role to Sponsor
+              Switch to Sponsor
             </button>
           )}
           <Link href="/agreements/new">
@@ -133,14 +133,14 @@ export default function SponsorDashboardPage() {
         <Card className="flex items-center justify-between">
           <div>
             <span className="text-[11px] text-neutral-400 uppercase tracking-wider block font-semibold">
-              LOCKED IN ESCROW VAULTS
+              LOCKED IN ESCROW
             </span>
             <div className="text-2xl font-bold text-white mt-1">
               ${formatUsdc(totalEscrowLocked)} <span className="text-xs text-neutral-400">USDC</span>
             </div>
-            <span className="text-[10px] text-neutral-500 mt-0.5 block">Active capital protection</span>
+            <span className="text-[10px] text-violet-400 mt-0.5 block">Vault PDAs</span>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-[#141416] border border-[#202024] flex items-center justify-center text-cyan-400">
+          <div className="w-10 h-10 rounded-xl bg-violet-600/10 border border-violet-500/30 flex items-center justify-center text-violet-400">
             <Lock className="w-5 h-5" />
           </div>
         </Card>

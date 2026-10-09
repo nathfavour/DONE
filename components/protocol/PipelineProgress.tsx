@@ -44,7 +44,7 @@ export function PipelineProgress({ state }: { state: MilestoneState }) {
                 step.completed
                   ? 'bg-[#141416] border-emerald-500/30 text-emerald-400'
                   : step.current
-                  ? 'bg-[#141416] border-white text-white shadow-sm'
+                  ? 'bg-[#141416] border-violet-500/60 text-violet-300 shadow-sm shadow-violet-950/40'
                   : 'bg-[#0d0d0f] border-[#26262a] text-neutral-500'
               }`}
             >
@@ -53,7 +53,7 @@ export function PipelineProgress({ state }: { state: MilestoneState }) {
                   STAGE {idx + 1}
                 </span>
                 {step.completed && <Check className="w-3.5 h-3.5 text-emerald-400" />}
-                {step.current && <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />}
+                {step.current && <span className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />}
               </div>
               <p className="font-semibold text-xs truncate">{step.short}</p>
             </div>

@@ -76,13 +76,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition-colors ${
+                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all ${
                   active
-                    ? 'bg-[#141416] text-white border border-[#26262a]'
+                    ? 'bg-[#141416] text-white border border-violet-500/40 shadow-sm shadow-violet-950/40'
                     : 'text-neutral-400 hover:text-white hover:bg-[#141416]/50 border border-transparent'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${active ? 'text-white' : 'text-neutral-400'}`} />
+                <Icon className={`w-4 h-4 ${active ? 'text-violet-400' : 'text-neutral-400'}`} />
                 <span>{item.label}</span>
               </Link>
             );
@@ -91,7 +91,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="pt-4">
             <Link
               href="/agreements/new"
-              className="flex items-center justify-center gap-2 w-full py-2.5 px-3 bg-white hover:bg-neutral-200 text-black font-semibold text-xs rounded-xl transition-colors shadow-sm"
+              className="flex items-center justify-center gap-2 w-full py-2.5 px-3 bg-violet-600 hover:bg-violet-500 text-white font-semibold text-xs rounded-xl transition-all shadow-lg shadow-violet-600/25 border border-violet-500/40 active:scale-[0.98]"
             >
               <PlusCircle className="w-4 h-4" />
               <span>Create Agreement</span>
@@ -104,13 +104,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="relative">
             <button
               onClick={() => setRoleDropdownOpen(!roleDropdownOpen)}
-              className="w-full flex items-center justify-between p-2 rounded-xl bg-[#141416] border border-[#202024] hover:border-[#26262a] text-neutral-300"
+              className="w-full flex items-center justify-between p-2 rounded-xl bg-[#141416] border border-[#202024] hover:border-violet-500/40 text-neutral-300 transition-colors"
             >
               <div className="flex items-center gap-2">
                 <span
                   className={`w-2 h-2 rounded-full ${
                     role === 'sponsor'
-                      ? 'bg-cyan-400'
+                      ? 'bg-violet-400 shadow-sm shadow-violet-400'
                       : role === 'worker'
                       ? 'bg-amber-400'
                       : 'bg-emerald-400'
@@ -182,10 +182,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             {/* Quick Faucet button */}
             <button
               onClick={() => requestDevnetUsdcFaucet(5_000_000_000)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#141416] hover:bg-[#1a1a1e] border border-[#26262a] text-cyan-300 text-xs font-medium transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#141416] hover:bg-[#1e1a29] border border-[#26262a] hover:border-violet-500/40 text-violet-300 text-xs font-medium transition-all shadow-sm"
               title="Airdrop +5,000 Devnet USDC"
             >
-              <Droplets className="w-3.5 h-3.5 text-cyan-400" />
+              <Droplets className="w-3.5 h-3.5 text-violet-400" />
               <span>+5K USDC</span>
             </button>
 
@@ -225,7 +225,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               key={item.href}
               href={item.href}
               className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-colors ${
-                active ? 'text-white' : 'text-neutral-400 hover:text-neutral-200'
+                active ? 'text-violet-400 font-bold' : 'text-neutral-400 hover:text-neutral-200'
               }`}
             >
               <Icon className="w-4 h-4 mb-0.5" />

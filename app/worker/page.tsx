@@ -110,20 +110,20 @@ export default function WorkerDashboardPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#26262a] pb-4">
         <div>
-          <div className="flex items-center gap-2 text-xs text-neutral-400 mb-1">
-            <Briefcase className="w-4 h-4 text-white" />
-            <span>BUILDER & WORKER ACTION STATION</span>
+          <div className="flex items-center gap-2 text-xs text-violet-400 mb-1">
+            <Briefcase className="w-4 h-4" />
+            <span className="font-bold tracking-wider">BUILDER STATION</span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-white">Worker Deliverables Console</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-white">Worker Deliverables</h1>
         </div>
 
         <div className="flex items-center gap-3">
           {role !== 'worker' && (
             <button
               onClick={() => switchRole('worker')}
-              className="text-xs text-amber-300 hover:underline px-3 py-1.5 rounded-xl border border-[#26262a] bg-[#141416]"
+              className="text-xs text-amber-300 hover:text-white px-3 py-1.5 rounded-xl border border-[#26262a] hover:border-amber-500/40 bg-[#141416] transition-colors"
             >
-              Switch Role to Worker
+              Switch to Worker
             </button>
           )}
         </div>
@@ -134,12 +134,12 @@ export default function WorkerDashboardPage() {
         <Card className="flex items-center justify-between">
           <div>
             <span className="text-[11px] text-neutral-400 uppercase tracking-wider block font-semibold">
-              SETTLED EARNINGS (PAID)
+              SETTLED EARNINGS
             </span>
             <div className="text-2xl font-bold text-emerald-400 mt-1">
               ${formatUsdc(totalSettledEarnings)} <span className="text-xs text-neutral-400">USDC</span>
             </div>
-            <span className="text-[10px] text-neutral-500 mt-0.5 block">Disbursed to your token ATA</span>
+            <span className="text-[10px] text-neutral-500 mt-0.5 block">Disbursed to Token ATA</span>
           </div>
           <div className="w-10 h-10 rounded-xl bg-[#141416] border border-[#202024] flex items-center justify-center text-emerald-400">
             <TrendingUp className="w-5 h-5" />
@@ -151,12 +151,12 @@ export default function WorkerDashboardPage() {
             <span className="text-[11px] text-neutral-400 uppercase tracking-wider block font-semibold">
               CLAIMABLE UNLOCKED
             </span>
-            <div className="text-2xl font-bold text-cyan-400 mt-1">
+            <div className="text-2xl font-bold text-violet-300 mt-1">
               ${formatUsdc(totalClaimableEarnings)} <span className="text-xs text-neutral-400">USDC</span>
             </div>
-            <span className="text-[10px] text-neutral-500 mt-0.5 block">Verified & ready to release</span>
+            <span className="text-[10px] text-violet-400 mt-0.5 block">Verified & Ready to Release</span>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-[#141416] border border-[#202024] flex items-center justify-center text-cyan-400">
+          <div className="w-10 h-10 rounded-xl bg-violet-600/10 border border-violet-500/30 flex items-center justify-center text-violet-400">
             <Coins className="w-5 h-5" />
           </div>
         </Card>
@@ -180,15 +180,15 @@ export default function WorkerDashboardPage() {
 
       {/* Actionable Unlocked Settlements */}
       {verifiedReadyToRelease.length > 0 && (
-        <div className="p-5 bg-[#0d0d0f] border border-cyan-500/30 rounded-2xl space-y-3.5">
+        <div className="p-5 bg-[#0d0d0f] border border-violet-500/30 rounded-2xl space-y-3.5">
           <div className="flex items-center justify-between border-b border-[#26262a] pb-3">
-            <div className="flex items-center gap-2 text-cyan-400">
+            <div className="flex items-center gap-2 text-violet-400">
               <Coins className="w-4 h-4" />
               <h3 className="font-bold text-xs uppercase tracking-wider text-neutral-100">
                 UNLOCKED FOR DISBURSAL ({verifiedReadyToRelease.length})
               </h3>
             </div>
-            <span className="px-2 py-0.5 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 text-[10px]">
+            <span className="px-2 py-0.5 rounded-lg bg-violet-500/15 text-violet-300 border border-violet-500/30 text-[10px] font-bold">
               READY TO CLAIM
             </span>
           </div>

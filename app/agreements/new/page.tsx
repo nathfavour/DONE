@@ -11,6 +11,7 @@ import {
 } from '@/lib/protocol/hashing';
 import { parseUsdc, truncateAddress } from '@/lib/solana';
 import { protocolClient, DEMO_KEYS } from '@/lib/protocol/client';
+import { useWallet } from '@/components/web3/WalletContext';
 import { useTransactionExecution } from '@/hooks/useTransactionExecution';
 import { TxStateModal } from '@/components/web3/TxStateModal';
 import { Button } from '@/components/ui/Button';
@@ -23,6 +24,8 @@ import {
   Hash,
   ArrowRight,
   Sparkles,
+  User,
+  Plus,
 } from 'lucide-react';
 
 interface MilestoneDraft {
@@ -34,48 +37,158 @@ interface MilestoneDraft {
   computedDodHash: string;
 }
 
+// Quick interactive templates
+const PRESETS = [
+  {
+    id: 'audit',
+    label: '🛡️ Contract Audit',
+    title: 'Rust Anchor Smart Contract Audit',
+    description: 'Security review and invariant fuzzing of protocol escrow vaults.',
+    termsText: '1. Definition of Done must strictly match on-chain criteria.\n2. Work artifacts hosted on Arweave.\n3. Disbursals are final upon block confirmation.',
+    worker: DEMO_KEYS.WORKER,
+    milestones: [
+      {
+        title: 'Static Analysis & Threat Model',
+        description: 'Comprehensive CPI call-path review and cargo-audit pass.',
+        amountUsdcString: '4000',
+        verificationType: VerificationType.SPONSOR,
+        criteria: [
+          'Architecture threat model covering CPI paths',
+          'Zero unaddressed high-risk cargo audit alerts',
+        ],
+        computedDodHash: '',
+      },
+      {
+        title: 'Trident Invariant Fuzzing',
+        description: 'Fuzz test suite verifying escrow solvency under fault conditions.',
+        amountUsdcString: '6000',
+        verificationType: VerificationType.SPONSOR,
+        criteria: [
+          'Trident fuzz run for 10M+ iterations',
+          'PR merged to core test repository',
+        ],
+        computedDodHash: '',
+      },
+    ],
+  },
+  {
+    id: 'frontend',
+    label: '⚡ Next.js UI Delivery',
+    title: 'Done Protocol Next.js Web App',
+    description: 'Production web app with pitch-black UI, flyout drawers, and wallet bindings.',
+    termsText: '1. Meets zero modal invariant (drawers only).\n2. TypeScript strictly typed.\n3. All Anchor instructions tested on Devnet.',
+    worker: DEMO_KEYS.WORKER,
+    milestones: [
+      {
+        title: 'Shell, Wallet & Agreements Feed',
+        description: 'App shell, responsive navigation, and live agreements overview.',
+        amountUsdcString: '3500',
+        verificationType: VerificationType.SPONSOR,
+        criteria: [
+          'AppShell with desktop left-nav & mobile dock',
+          'Live Solana Devnet RPC hook integration',
+        ],
+        computedDodHash: '',
+      },
+      {
+        title: 'Contextual Drawers & Settlement',
+        description: 'Evidence submission, DoD verification audit, and escrow disbursals.',
+        amountUsdcString: '4500',
+        verificationType: VerificationType.SPONSOR,
+        criteria: [
+          'SlideDrawer with right flyout & mobile sheet',
+          'One-click verification and settlement flow',
+        ],
+        computedDodHash: '',
+      },
+    ],
+  },
+  {
+    id: 'bot',
+    label: '🤖 Oracle Verification Bot',
+    title: 'Automated GitHub CI/CD Oracle',
+    description: 'Event-driven Oracle verifying PR merges and committing proofs to Devnet.',
+    termsText: '1. Cryptographic proof signatures verified on-chain.\n2. 99.9% uptime SLA.',
+    worker: DEMO_KEYS.ORACLE,
+    milestones: [
+      {
+        title: 'GitHub Webhook Ingestion Engine',
+        description: 'Serverless parser verifying SHA commit signatures against DoD.',
+        amountUsdcString: '3000',
+        verificationType: VerificationType.ON_CHAIN_ORACLE,
+        criteria: [
+          'Webhook listener validating GitHub HMAC signature',
+          'Automated proof generation to Solana Devnet',
+        ],
+        computedDodHash: '',
+      },
+      {
+        title: 'Attestation & Auto-Disburse Pipe',
+        description: 'Autonomous trigger calling verify_milestone instruction.',
+        amountUsdcString: '5000',
+        verificationType: VerificationType.ON_CHAIN_ORACLE,
+        criteria: [
+          'Multi-signature oracle consensus rule',
+          'End-to-end automated settlement verified',
+        ],
+        computedDodHash: '',
+      },
+    ],
+  },
+  {
+    id: 'bounty',
+    label: '🎯 Rapid Bug Bounty',
+    title: 'Escrow Math Overflow Investigation',
+    description: 'Targeted research into token balance precision and edge cases.',
+    termsText: '1. PoC exploit delivered with unit test.\n2. Non-disclosure until patched.',
+    worker: DEMO_KEYS.WORKER,
+    milestones: [
+      {
+        title: 'PoC Exploit Demonstration',
+        description: 'Reproducible Anchor test showcasing the edge-case behavior.',
+        amountUsdcString: '2500',
+        verificationType: VerificationType.SPONSOR,
+        criteria: [
+          'Self-contained reproduction script with Anchor test',
+          'Detailed remediation recommendation',
+        ],
+        computedDodHash: '',
+      },
+    ],
+  },
+];
+
 export default function NewAgreementPage() {
   const router = useRouter();
+  const { publicKeyString } = useWallet();
   const { txState, execute, reset, isOpen } = useTransactionExecution();
 
-  // Step 1: Sponsor & Agreement Terms
+  // Form State
   const [workerPubkey, setWorkerPubkey] = useState(DEMO_KEYS.WORKER);
   const [title, setTitle] = useState('Rust Anchor Smart Contract Audit');
   const [description, setDescription] = useState(
     'Comprehensive security review and invariant testing of protocol escrow vaults.'
   );
   const [termsText, setTermsText] = useState(
-    '1. All milestones must strictly satisfy committed Definition of Done criteria.\n2. Work artifacts must be permanently stored on Arweave or IPFS.\n3. Disbursals are final upon block confirmation.'
+    '1. Milestones strictly satisfy committed Definition of Done.\n2. Work artifacts permanently hosted on Arweave/IPFS.\n3. Disbursals are final upon block confirmation.'
   );
   const [computedTermsHash, setComputedTermsHash] = useState('');
 
-  // Step 2: Milestones
-  const [milestones, setMilestones] = useState<MilestoneDraft[]>([
-    {
-      title: 'Threat Modeling & Static Verification',
-      description: 'Architecture threat modeling and cargo-audit Slither reports.',
-      amountUsdcString: '4000',
-      verificationType: VerificationType.SPONSOR,
-      criteria: [
-        'Architecture threat model document covering all CPI call paths',
-        'Automated cargo-audit report with zero unaddressed high-risk alerts',
-      ],
-      computedDodHash: '',
-    },
-    {
-      title: 'Trident Invariant Fuzzing & Review',
-      description: 'Trident fuzz test suite verifying solvency and PDA safety.',
-      amountUsdcString: '6000',
-      verificationType: VerificationType.SPONSOR,
-      criteria: [
-        'Trident fuzzing test suite run for minimum 10,000,000 iterations',
-        'Pull request merged into target protocol repository test tree',
-      ],
-      computedDodHash: '',
-    },
-  ]);
+  // Milestones State
+  const [milestones, setMilestones] = useState<MilestoneDraft[]>(PRESETS[0].milestones);
 
-  // Compute terms hash whenever terms change
+  // Apply Preset
+  const applyPreset = (presetId: string) => {
+    const p = PRESETS.find((x) => x.id === presetId);
+    if (!p) return;
+    setTitle(p.title);
+    setDescription(p.description);
+    setTermsText(p.termsText);
+    setWorkerPubkey(p.worker);
+    setMilestones(p.milestones.map((m) => ({ ...m })));
+  };
+
+  // Compute Terms Hash
   useEffect(() => {
     let active = true;
     const compute = async () => {
@@ -88,9 +201,8 @@ export default function NewAgreementPage() {
     };
   }, [title, description, termsText]);
 
+  // Compute DoD Hashes
   const criteriaSignature = JSON.stringify(milestones.map((m) => m.criteria));
-
-  // Compute DoD hashes for milestones
   useEffect(() => {
     let active = true;
     const computeAll = async () => {
@@ -120,11 +232,11 @@ export default function NewAgreementPage() {
     setMilestones([
       ...milestones,
       {
-        title: `Milestone ${milestones.length}: New Deliverable`,
-        description: 'Provide deliverable description...',
+        title: `Milestone ${milestones.length + 1}: Deliverable`,
+        description: 'Deliverable specification...',
         amountUsdcString: '2500',
         verificationType: VerificationType.SPONSOR,
-        criteria: ['Criterion 1 requirement', 'Criterion 2 validation'],
+        criteria: ['Verifiable output artifact committed', 'Test verification passed'],
         computedDodHash: '',
       },
     ]);
@@ -141,9 +253,15 @@ export default function NewAgreementPage() {
     setMilestones(next);
   };
 
-  const addCriterion = (mIdx: number) => {
+  const adjustMilestoneAmount = (mIdx: number, delta: number) => {
+    const current = parseFloat(milestones[mIdx].amountUsdcString) || 0;
+    const updated = Math.max(100, current + delta);
+    updateMilestone(mIdx, { amountUsdcString: updated.toString() });
+  };
+
+  const addCriterion = (mIdx: number, defaultText: string = '') => {
     const next = [...milestones];
-    next[mIdx].criteria.push('');
+    next[mIdx].criteria.push(defaultText);
     setMilestones(next);
   };
 
@@ -159,13 +277,16 @@ export default function NewAgreementPage() {
     setMilestones(next);
   };
 
-  const totalBudgetUsdc = milestones.reduce((sum, m) => sum + (parseFloat(m.amountUsdcString) || 0), 0);
+  const totalBudgetUsdc = milestones.reduce(
+    (sum, m) => sum + (parseFloat(m.amountUsdcString) || 0),
+    0
+  );
 
   const handleCreateAgreement = async () => {
     try {
       new PublicKey(workerPubkey);
     } catch {
-      alert('Invalid Solana Worker Public Key format');
+      alert('Invalid Solana Worker Public Key');
       return;
     }
 
@@ -173,7 +294,7 @@ export default function NewAgreementPage() {
 
     const result = await execute(
       'createAgreement',
-      `Initializing Agreement PDA with worker ${truncateAddress(workerPubkey, 4)} and ${milestones.length} milestones`,
+      `Init Agreement with worker ${truncateAddress(workerPubkey, 4)} & ${milestones.length} milestones`,
       async () => {
         const agRes = await protocolClient.createAgreement({
           worker: new PublicKey(workerPubkey),
@@ -208,113 +329,147 @@ export default function NewAgreementPage() {
     if (result) {
       setTimeout(() => {
         router.push(`/agreements/${result.agreementPda.toBase58()}`);
-      }, 1000);
+      }, 800);
     }
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 font-mono text-neutral-100">
+    <div className="max-w-4xl mx-auto space-y-5 font-mono text-neutral-100">
       <TxStateModal state={txState} isOpen={isOpen} onClose={reset} />
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#26262a] pb-4">
+      {/* Header Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#26262a] pb-3">
         <div>
-          <div className="flex items-center gap-2 text-xs text-neutral-400 mb-1">
-            <ShieldCheck className="w-4 h-4 text-white" />
-            <span>INITIALIZATION WIZARD</span>
+          <div className="flex items-center gap-2 text-xs text-violet-400 mb-0.5">
+            <ShieldCheck className="w-4 h-4" />
+            <span className="font-bold tracking-wider">NEW AGREEMENT WIZARD</span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-white">
-            Create Verifiable Agreement
-          </h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-white">Create Agreement</h1>
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Quick presets */}
-          <button
-            type="button"
-            onClick={() => {
-              setTitle('Rust Anchor Smart Contract Audit');
-              setDescription('Security review and invariant fuzz testing of protocol vaults.');
-              setWorkerPubkey(DEMO_KEYS.WORKER);
-            }}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#141416] hover:bg-[#1a1a1e] border border-[#26262a] rounded-xl text-xs text-cyan-300"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Preset: Security Audit</span>
-          </button>
+          <Button variant="secondary" size="sm" onClick={() => router.push('/agreements')}>
+            Cancel
+          </Button>
+          <Button variant="primary" size="sm" onClick={handleCreateAgreement}>
+            <span>Initialize & Fund</span>
+            <ArrowRight className="w-4 h-4 ml-1.5" />
+          </Button>
         </div>
       </div>
 
-      {/* 3.3 Sponsor Step Card (rounded-2xl, #0d0d0f) */}
+      {/* 1-Click Template Buttons */}
+      <div className="bg-[#0d0d0f] border border-[#26262a] p-3 rounded-2xl space-y-2">
+        <div className="flex items-center gap-2 text-xs text-neutral-400">
+          <Sparkles className="w-3.5 h-3.5 text-violet-400" />
+          <span className="font-semibold text-neutral-200 uppercase text-[11px]">Quick Templates:</span>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {PRESETS.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => applyPreset(p.id)}
+              className="px-3 py-1.5 rounded-xl bg-[#141416] hover:bg-[#1f1b2e] border border-[#26262a] hover:border-violet-500/40 text-xs text-neutral-200 hover:text-white transition-all active:scale-95"
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Sponsor Step Card */}
       <Card className="space-y-4">
         <div className="flex items-center justify-between border-b border-[#26262a] pb-3">
           <div className="flex items-center gap-2">
-            <span className="w-6 h-6 rounded-lg bg-[#141416] border border-[#202024] flex items-center justify-center text-xs font-bold text-neutral-200">
+            <span className="w-6 h-6 rounded-lg bg-violet-600/20 text-violet-300 border border-violet-500/30 flex items-center justify-center text-xs font-bold">
               1
             </span>
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-              Sponsor Specifications & Scope
+            <h3 className="text-xs font-bold text-white uppercase tracking-wider">
+              Agreement Parameters
             </h3>
           </div>
-          <span className="text-[11px] text-neutral-400 font-mono">PARAMETERS</span>
+          {computedTermsHash && (
+            <span className="text-[10px] text-violet-400 bg-violet-950/40 border border-violet-800/40 px-2 py-0.5 rounded-lg truncate max-w-[200px]">
+              SHA-256: {computedTermsHash.slice(0, 12)}...
+            </span>
+          )}
         </div>
 
-        <div className="space-y-4">
+        {/* Worker Address with Quick Buttons */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-medium text-neutral-300 uppercase tracking-wide">
+              Worker Solana Address
+            </label>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setWorkerPubkey(DEMO_KEYS.WORKER)}
+                className="text-[10px] px-2 py-0.5 rounded-lg bg-[#141416] hover:bg-[#1e1a29] border border-[#26262a] text-neutral-300 hover:text-violet-300"
+              >
+                Demo Worker
+              </button>
+              <button
+                type="button"
+                onClick={() => setWorkerPubkey(DEMO_KEYS.ORACLE)}
+                className="text-[10px] px-2 py-0.5 rounded-lg bg-[#141416] hover:bg-[#1e1a29] border border-[#26262a] text-neutral-300 hover:text-violet-300"
+              >
+                Oracle Bot
+              </button>
+              {publicKeyString && (
+                <button
+                  type="button"
+                  onClick={() => setWorkerPubkey(publicKeyString)}
+                  className="text-[10px] px-2 py-0.5 rounded-lg bg-[#141416] hover:bg-[#1e1a29] border border-[#26262a] text-neutral-300 hover:text-violet-300"
+                >
+                  My Wallet
+                </button>
+              )}
+            </div>
+          </div>
           <Input
-            label="WORKER SOLANA PUBLIC KEY"
-            helperText="The base58 keypair authorized to execute work and claim released USDC."
             value={workerPubkey}
             onChange={(e) => setWorkerPubkey(e.target.value)}
+            placeholder="Base58 Solana Address..."
             required
           />
+        </div>
 
-          <Input
-            label="AGREEMENT TITLE"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-          />
-
-          <Textarea
-            label="HIGH-LEVEL PROJECT SPECIFICATIONS & SCOPE"
-            rows={2}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            required
-          />
-
-          <Textarea
-            label="TERMS & PROVISIONS (CANONICAL COMMITMENT PRE-IMAGE)"
-            rows={3}
-            value={termsText}
-            onChange={(e) => setTermsText(e.target.value)}
-            required
-          />
-
-          {/* Canonical Terms Hash Preview */}
-          <div className="p-3 bg-[#141416] border border-[#202024] rounded-xl">
-            <div className="flex items-center gap-1.5 text-[10px] text-neutral-400 uppercase font-bold mb-1">
-              <Hash className="w-3 h-3 text-cyan-400" />
-              CANONICAL SHA-256 TERMS COMMITMENT:
-            </div>
-            <div className="text-xs text-cyan-300 font-mono break-all">{computedTermsHash}</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="sm:col-span-2">
+            <Input
+              label="AGREEMENT TITLE"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <Textarea
+              label="SCOPE & OBJECTIVES"
+              rows={2}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              required
+            />
           </div>
         </div>
       </Card>
 
-      {/* 3.3 Milestone Builder Section */}
-      <div className="space-y-4">
+      {/* Milestone Builder Section */}
+      <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="w-6 h-6 rounded-lg bg-[#141416] border border-[#202024] flex items-center justify-center text-xs font-bold text-neutral-200">
+            <span className="w-6 h-6 rounded-lg bg-violet-600/20 text-violet-300 border border-violet-500/30 flex items-center justify-center text-xs font-bold">
               2
             </span>
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-              Milestone Builder ({milestones.length})
+            <h3 className="text-xs font-bold text-white uppercase tracking-wider">
+              Milestones ({milestones.length})
             </h3>
           </div>
           <Button variant="secondary" size="sm" onClick={addMilestone}>
-            <PlusCircle className="w-3.5 h-3.5 mr-1.5" />
+            <PlusCircle className="w-3.5 h-3.5 mr-1 text-violet-400" />
             Add Milestone
           </Button>
         </div>
@@ -322,26 +477,36 @@ export default function NewAgreementPage() {
         {milestones.map((m, mIdx) => (
           <div
             key={mIdx}
-            className="p-5 bg-[#0d0d0f] border border-[#26262a] rounded-2xl space-y-4"
+            className="p-4 sm:p-5 bg-[#0d0d0f] border border-[#26262a] rounded-2xl space-y-3.5 hover:border-[#323238] transition-colors"
           >
-            <div className="flex items-center justify-between border-b border-[#26262a] pb-3">
+            {/* Milestone Header */}
+            <div className="flex items-center justify-between border-b border-[#26262a] pb-2.5">
               <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 rounded-lg bg-[#141416] border border-[#202024] text-xs font-bold text-neutral-300">
-                  MILESTONE #{mIdx}
+                <span className="px-2 py-0.5 rounded-lg bg-[#141416] border border-violet-500/30 text-xs font-bold text-violet-300">
+                  #{mIdx + 1}
                 </span>
-                <span className="text-xs font-semibold text-white">{m.title}</span>
+                <span className="text-xs font-bold text-white truncate max-w-sm">{m.title}</span>
               </div>
-              {milestones.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeMilestone(mIdx)}
-                  className="text-neutral-500 hover:text-red-400 text-xs inline-flex items-center gap-1"
-                >
-                  <Trash2 className="w-3.5 h-3.5" /> Remove
-                </button>
-              )}
+              <div className="flex items-center gap-2">
+                {m.computedDodHash && (
+                  <span className="text-[10px] text-neutral-400 font-mono hidden sm:inline">
+                    DoD: {m.computedDodHash.slice(0, 10)}...
+                  </span>
+                )}
+                {milestones.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeMilestone(mIdx)}
+                    className="text-neutral-500 hover:text-red-400 text-xs p-1"
+                    title="Delete milestone"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
             </div>
 
+            {/* Title & Amount with Increment Buttons */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="sm:col-span-2">
                 <Input
@@ -351,9 +516,30 @@ export default function NewAgreementPage() {
                   required
                 />
               </div>
-              <div>
+
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-medium text-neutral-300 uppercase tracking-wide">
+                    Amount (USDC)
+                  </label>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => adjustMilestoneAmount(mIdx, 500)}
+                      className="text-[10px] px-1.5 py-0.5 rounded bg-[#141416] hover:bg-violet-900/40 text-violet-300 border border-[#26262a]"
+                    >
+                      +500
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => adjustMilestoneAmount(mIdx, 1000)}
+                      className="text-[10px] px-1.5 py-0.5 rounded bg-[#141416] hover:bg-violet-900/40 text-violet-300 border border-[#26262a]"
+                    >
+                      +1K
+                    </button>
+                  </div>
+                </div>
                 <Input
-                  label="ALLOCATED AMOUNT (USDC)"
                   type="number"
                   min="1"
                   step="1"
@@ -364,55 +550,77 @@ export default function NewAgreementPage() {
               </div>
             </div>
 
-            <Textarea
-              label="MILESTONE OBJECTIVE"
-              rows={2}
-              value={m.description}
-              onChange={(e) => updateMilestone(mIdx, { description: e.target.value })}
-              required
-            />
-
-            {/* Verification Mode Selector */}
+            {/* Verification Mode Selector: Button Segment */}
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-neutral-300 uppercase tracking-wide">
-                VERIFICATION MODE
+                Verification Method
               </label>
-              <select
-                value={m.verificationType}
-                onChange={(e) =>
-                  updateMilestone(mIdx, { verificationType: Number(e.target.value) })
-                }
-                className="w-full bg-[#141416] border border-[#26262a] px-3.5 py-2.5 text-xs text-neutral-100 rounded-xl focus:outline-none focus:border-neutral-400"
-              >
-                <option value={VerificationType.SPONSOR}>Sponsor Approval</option>
-                <option value={VerificationType.ON_CHAIN_ORACLE}>On-Chain Condition / Oracle</option>
-                <option value={VerificationType.ATTESTATION}>Attestation (EAS / Precompile)</option>
-              </select>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { type: VerificationType.SPONSOR, label: '👤 Sponsor Sign-off' },
+                  { type: VerificationType.ON_CHAIN_ORACLE, label: '⚡ Oracle / Bot' },
+                  { type: VerificationType.ATTESTATION, label: '📜 Attestation' },
+                ].map((mode) => {
+                  const isActive = m.verificationType === mode.type;
+                  return (
+                    <button
+                      key={mode.type}
+                      type="button"
+                      onClick={() => updateMilestone(mIdx, { verificationType: mode.type })}
+                      className={`py-2 px-2.5 rounded-xl text-xs font-medium transition-all ${
+                        isActive
+                          ? 'bg-violet-600/25 border border-violet-500 text-white font-bold shadow-sm'
+                          : 'bg-[#141416] border border-[#202024] text-neutral-400 hover:text-white hover:border-[#26262a]'
+                      }`}
+                    >
+                      {mode.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
-            {/* Definition of Done Checklist */}
+            {/* Definition of Done Checklist with Quick Condition Adders */}
             <div className="space-y-2 pt-2 border-t border-[#26262a]">
-              <div className="flex justify-between items-center">
+              <div className="flex flex-wrap justify-between items-center gap-2">
                 <label className="text-xs font-semibold text-neutral-300 uppercase tracking-wide">
-                  DEFINITION OF DONE CHECKLIST ({m.criteria.length})
+                  Definition of Done Criteria ({m.criteria.length})
                 </label>
-                <button
-                  type="button"
-                  onClick={() => addCriterion(mIdx)}
-                  className="text-[11px] text-cyan-400 hover:text-cyan-300 inline-flex items-center gap-1"
-                >
-                  <PlusCircle className="w-3 h-3" /> Add Item
-                </button>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => addCriterion(mIdx, 'Pull request merged into target repo')}
+                    className="text-[10px] px-2 py-0.5 rounded-lg bg-[#141416] hover:bg-violet-900/30 text-neutral-300 hover:text-violet-300 border border-[#26262a]"
+                  >
+                    + PR Merged
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => addCriterion(mIdx, '100% tests pass with zero regression')}
+                    className="text-[10px] px-2 py-0.5 rounded-lg bg-[#141416] hover:bg-violet-900/30 text-neutral-300 hover:text-violet-300 border border-[#26262a]"
+                  >
+                    + Tests Pass
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => addCriterion(mIdx)}
+                    className="text-[10px] px-2 py-0.5 rounded-lg bg-violet-600/20 text-violet-300 border border-violet-500/30 hover:bg-violet-600/30 inline-flex items-center gap-1 font-bold"
+                  >
+                    <Plus className="w-3 h-3" /> Custom
+                  </button>
+                </div>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {m.criteria.map((crit, cIdx) => (
                   <div key={cIdx} className="flex gap-2 items-center">
-                    <span className="text-xs font-bold text-neutral-500 w-5">[{cIdx + 1}]</span>
+                    <span className="text-[11px] font-bold text-violet-400 w-5">
+                      #{cIdx + 1}
+                    </span>
                     <Input
                       value={crit}
                       onChange={(e) => updateCriterion(mIdx, cIdx, e.target.value)}
-                      placeholder="Verifiable completion requirement..."
+                      placeholder="Verifiable completion condition..."
                     />
                     {m.criteria.length > 1 && (
                       <button
@@ -420,46 +628,45 @@ export default function NewAgreementPage() {
                         onClick={() => removeCriterion(mIdx, cIdx)}
                         className="p-2 text-neutral-500 hover:text-red-400"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     )}
                   </div>
                 ))}
               </div>
             </div>
-
-            {/* Canonical Commitment Preview */}
-            <div className="p-3 bg-[#141416] border border-[#202024] rounded-xl text-xs">
-              <div className="flex items-center gap-1.5 text-[10px] text-neutral-400 uppercase font-bold mb-0.5">
-                <Hash className="w-3 h-3 text-cyan-400" />
-                CANONICAL DoD SHA-256 HASH (NORMALIZED & SORTED):
-              </div>
-              <div className="text-[11px] text-amber-400 font-mono break-all">
-                {m.computedDodHash || 'Hashing...'}
-              </div>
-            </div>
           </div>
         ))}
       </div>
 
-      {/* 3.3 Action Bar */}
-      <div className="p-5 bg-[#0d0d0f] border border-[#26262a] rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
+      {/* Action Bar */}
+      <div className="p-4 sm:p-5 bg-[#0d0d0f] border border-[#26262a] rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
         <div>
-          <span className="text-neutral-400 text-xs uppercase block">TOTAL ESCROW BUDGET</span>
+          <span className="text-neutral-400 text-xs uppercase block font-semibold">Total Escrow</span>
           <div className="text-2xl font-bold text-white">
             ${totalBudgetUsdc.toLocaleString()} <span className="text-xs text-neutral-400">USDC</span>
           </div>
-          <span className="text-[11px] text-neutral-500">
-            {milestones.length} Milestones committed to Solana Devnet
+          <span className="text-[11px] text-violet-400">
+            {milestones.length} Milestones ready to deploy on Devnet
           </span>
         </div>
 
-        <div className="flex items-center gap-3">
-          <Button variant="secondary" size="md" onClick={() => router.push('/agreements')}>
+        <div className="flex items-center gap-2.5 w-full sm:w-auto">
+          <Button
+            variant="secondary"
+            size="md"
+            onClick={() => router.push('/agreements')}
+            className="flex-1 sm:flex-none"
+          >
             Cancel
           </Button>
-          <Button variant="primary" size="md" onClick={handleCreateAgreement}>
-            <span>Initialize Agreement & Fund Escrow</span>
+          <Button
+            variant="primary"
+            size="md"
+            onClick={handleCreateAgreement}
+            className="flex-1 sm:flex-none"
+          >
+            <span>Initialize & Fund Escrow</span>
             <ArrowRight className="w-4 h-4 ml-1.5" />
           </Button>
         </div>

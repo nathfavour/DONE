@@ -78,9 +78,9 @@ export default function AgreementsExplorerPage() {
             <button
               key={opt.id}
               onClick={() => setActiveFilter(opt.id as any)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                 activeFilter === opt.id
-                  ? 'bg-[#141416] text-white shadow-sm border border-[#26262a]'
+                  ? 'bg-violet-600 text-white shadow-sm font-bold'
                   : 'text-neutral-400 hover:text-white'
               }`}
             >
@@ -97,7 +97,7 @@ export default function AgreementsExplorerPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search agreement, worker, address..."
-            className="w-full sm:w-64 bg-[#0d0d0f] border border-[#26262a] rounded-xl pl-9 pr-3.5 py-2 text-xs text-neutral-100 placeholder-neutral-500 focus:outline-none focus:border-neutral-400 transition-colors"
+            className="w-full sm:w-64 bg-[#0d0d0f] border border-[#26262a] rounded-xl pl-9 pr-3.5 py-2 text-xs text-neutral-100 placeholder-neutral-500 focus:outline-none focus:border-violet-500 transition-colors"
           />
         </div>
       </div>
@@ -130,12 +130,12 @@ export default function AgreementsExplorerPage() {
                 href={`/agreements/${agreement.publicKey}`}
                 className="group block"
               >
-                <div className="bg-[#0d0d0f] border border-[#26262a] group-hover:border-neutral-500 rounded-2xl p-5 transition-all space-y-4">
+                <div className="bg-[#0d0d0f] border border-[#26262a] group-hover:border-violet-500/40 rounded-2xl p-5 transition-all space-y-4">
                   {/* Top row */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2.5">
-                        <h3 className="text-base font-bold text-white group-hover:text-cyan-300 transition-colors">
+                        <h3 className="text-base font-bold text-white group-hover:text-violet-300 transition-colors">
                           {agreement.title}
                         </h3>
                         <AgreementStateBadge state={agreement.state} />
@@ -163,7 +163,7 @@ export default function AgreementsExplorerPage() {
                     </div>
                     <div className="w-full h-1.5 bg-[#141416] rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-white rounded-full transition-all duration-300"
+                        className="h-full bg-gradient-to-r from-violet-600 to-violet-400 rounded-full transition-all duration-300"
                         style={{ width: `${progressPct}%` }}
                       />
                     </div>

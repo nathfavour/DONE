@@ -15,29 +15,26 @@ import { TxStateModal } from '@/components/web3/TxStateModal';
 import { QuickActionModal, QuickActionType } from '@/components/protocol/QuickActionModal';
 import {
   Lock,
-  TrendingUp,
-  Cpu,
   PlusCircle,
   ExternalLink,
   ShieldCheck,
   UploadCloud,
   Coins,
-  ChevronRight,
-  Play,
   RotateCcw,
-  SlidersHorizontal,
   CheckCircle2,
   FileCode,
   ArrowRight,
   Activity,
   Layers,
+  Sparkles,
+  Droplets,
 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { AGREEMENTS_QUERY_KEY } from '@/hooks/useAgreement';
 
 export default function OverviewCommandPage() {
   const { data: agreements = [], isLoading } = useAgreements();
-  const { publicKeyString, role, switchRole, usdcBalance, currentSlot, rpcLatencyMs } = useWallet();
+  const { publicKeyString, role, switchRole, usdcBalance, currentSlot, rpcLatencyMs, requestDevnetUsdcFaucet } = useWallet();
   const { txState, execute, reset: resetTx, isOpen: isTxOpen } = useTransactionExecution();
   const queryClient = useQueryClient();
 
@@ -136,32 +133,33 @@ export default function OverviewCommandPage() {
   };
 
   return (
-    <div className="space-y-6 font-mono text-neutral-100">
-      {/* 1. INTERACTIVE DEMO CONTROL CENTER / HUD */}
-      <section className="bg-[#0d0d0f] border border-[#26262a] rounded-2xl p-4 sm:p-5 space-y-4">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-[#26262a] pb-4">
+    <div className="space-y-5 font-mono text-neutral-100">
+      {/* 1. BUTTON-DRIVEN CONTROL HUD */}
+      <section className="bg-[#0d0d0f] border border-[#26262a] rounded-2xl p-4 sm:p-5 space-y-3.5">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-[#26262a] pb-3">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#141416] border border-[#26262a] flex items-center justify-center text-cyan-400">
+            <div className="w-10 h-10 rounded-xl bg-violet-600/10 border border-violet-500/30 flex items-center justify-center text-violet-400">
               <Layers className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-sm font-bold text-white tracking-wide uppercase">
-                  Protocol Settlement Engine
+                  Settlement Console
                 </span>
-                <span className="px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold">
-                  LIVE INTERFACE
+                <span className="px-2 py-0.5 rounded-lg bg-violet-500/15 text-violet-300 border border-violet-500/30 text-[10px] font-bold">
+                  SOLANA DEVNET
                 </span>
               </div>
-              <p className="text-xs text-neutral-400 mt-0.5">
-                Deterministic escrow on Solana: Definition of Done $\rightarrow$ Evidence $\rightarrow$ Verification $\rightarrow$ Settlement.
-              </p>
+              <div className="flex items-center gap-2 text-xs text-neutral-400 mt-0.5">
+                <span>Balance: <span className="text-emerald-400 font-bold">${formatUsdc(usdcBalance)} USDC</span></span>
+                <span>•</span>
+                <span>Latency: {rpcLatencyMs}ms</span>
+              </div>
             </div>
           </div>
 
-          {/* Quick Role Switcher Buttons */}
-          <div className="flex items-center gap-1.5 bg-[#141416] border border-[#202024] p-1.5 rounded-xl">
-            <span className="text-[11px] text-neutral-400 px-2 font-semibold hidden sm:inline">ACT AS:</span>
+          {/* Quick Role Buttons */}
+          <div className="flex items-center gap-1.5 bg-[#141416] border border-[#202024] p-1 rounded-xl">
             {(['sponsor', 'worker', 'oracle'] as WalletRole[]).map((r) => {
               const isActive = role === r;
               return (
@@ -170,11 +168,7 @@ export default function OverviewCommandPage() {
                   onClick={() => switchRole(r)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold uppercase transition-all ${
                     isActive
-                      ? r === 'sponsor'
-                        ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
-                        : r === 'worker'
-                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                        : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                      ? 'bg-violet-600 text-white shadow-md shadow-violet-600/30 font-bold'
                       : 'text-neutral-400 hover:text-white hover:bg-[#1a1a1e]'
                   }`}
                 >
@@ -185,35 +179,38 @@ export default function OverviewCommandPage() {
           </div>
         </div>
 
-        {/* Quick Demo Workflow Action Row */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-          <div className="flex items-center gap-2 text-xs text-neutral-300">
-            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-            <span className="text-neutral-400">Target Role:</span>
-            <span className="font-bold text-white uppercase">{role}</span>
-            <span className="text-neutral-500">|</span>
-            <span className="text-neutral-400">Balance:</span>
-            <span className="text-emerald-400 font-bold">${formatUsdc(usdcBalance)} USDC</span>
-          </div>
-
+        {/* Quick Action Button Row */}
+        <div className="flex flex-wrap items-center justify-between gap-2.5 pt-0.5">
           <div className="flex flex-wrap items-center gap-2">
             <Link href="/agreements/new">
               <Button variant="primary" size="sm">
                 <PlusCircle className="w-4 h-4 mr-1.5" />
-                Create Agreement
+                New Agreement
               </Button>
             </Link>
+
+            <button
+              onClick={() => requestDevnetUsdcFaucet(5_000_000_000)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#141416] hover:bg-violet-950/40 border border-[#26262a] hover:border-violet-500/40 text-violet-300 text-xs font-medium transition-all"
+            >
+              <Droplets className="w-3.5 h-3.5 text-violet-400" />
+              <span>+5K USDC Faucet</span>
+            </button>
 
             <Button
               variant="outline"
               size="sm"
               onClick={handleResetDemoState}
-              className="text-neutral-300 hover:text-white border-[#26262a]"
-              title="Reset sample agreements and local demo state"
+              className="text-neutral-400 hover:text-white border-[#26262a]"
+              title="Reset sample agreements"
             >
-              <RotateCcw className="w-3.5 h-3.5 mr-1 text-neutral-400" />
+              <RotateCcw className="w-3.5 h-3.5 mr-1" />
               Reset Demo
             </Button>
+          </div>
+
+          <div className="text-[11px] text-neutral-400">
+            Slot #{currentSlot.toLocaleString()}
           </div>
         </div>
       </section>
@@ -227,7 +224,7 @@ export default function OverviewCommandPage() {
           <div className="text-xl sm:text-2xl font-bold text-white mt-1">
             ${formatUsdc(totalEscrowed)} <span className="text-xs text-neutral-400 font-normal">USDC</span>
           </div>
-          <span className="text-[10px] text-neutral-500 mt-1">Held in Vault PDAs</span>
+          <span className="text-[10px] text-violet-400 mt-1">Vault PDAs</span>
         </div>
 
         <div className="bg-[#0d0d0f] border border-[#26262a] p-4 rounded-2xl flex flex-col justify-between">
@@ -237,57 +234,56 @@ export default function OverviewCommandPage() {
           <div className="text-xl sm:text-2xl font-bold text-emerald-400 mt-1">
             ${formatUsdc(totalSettled)} <span className="text-xs text-neutral-400 font-normal">USDC</span>
           </div>
-          <span className="text-[10px] text-neutral-500 mt-1">Disbursed to Worker ATAs</span>
+          <span className="text-[10px] text-neutral-500 mt-1">Released to Worker ATAs</span>
         </div>
 
         <div className="bg-[#0d0d0f] border border-[#26262a] p-4 rounded-2xl flex flex-col justify-between">
           <span className="text-[10px] text-neutral-400 uppercase tracking-wider font-semibold">
-            In-Flight Milestones
+            Active Milestones
           </span>
           <div className="text-xl sm:text-2xl font-bold text-white mt-1">
-            {activeInFlightMilestones} <span className="text-xs text-neutral-400 font-normal">Active</span>
+            {activeInFlightMilestones} <span className="text-xs text-neutral-400 font-normal">In-Flight</span>
           </div>
           <span className="text-[10px] text-neutral-500 mt-1">Evidence & Verification</span>
         </div>
 
         <div className="bg-[#0d0d0f] border border-[#26262a] p-4 rounded-2xl flex flex-col justify-between">
           <span className="text-[10px] text-neutral-400 uppercase tracking-wider font-semibold">
-            Solana Devnet
+            RPC Health
           </span>
-          <div className="text-xl sm:text-2xl font-bold text-cyan-300 mt-1 truncate">
+          <div className="text-xl sm:text-2xl font-bold text-violet-300 mt-1 truncate">
             {rpcLatencyMs}ms
           </div>
-          <span className="text-[10px] text-neutral-500 mt-1">Slot #{currentSlot.toLocaleString()}</span>
+          <span className="text-[10px] text-emerald-400 mt-1">Devnet Online</span>
         </div>
       </section>
 
-      {/* 3. ACTIVE AGREEMENTS INTERACTIVE WORKSPACE */}
+      {/* 3. ACTIVE AGREEMENTS WORKSPACE */}
       <section className="bg-[#0d0d0f] border border-[#26262a] rounded-2xl p-4 sm:p-5 space-y-4">
         {/* Workspace Bar with Filters */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#26262a] pb-3">
           <div className="flex items-center gap-2">
-            <FileCode className="w-4 h-4 text-cyan-400" />
-            <h2 className="text-sm font-bold text-white uppercase tracking-wider">
-              Protocol Agreements Workspace
+            <FileCode className="w-4 h-4 text-violet-400" />
+            <h2 className="text-xs font-bold text-white uppercase tracking-wider">
+              Active Agreements ({filteredAgreements.length})
             </h2>
-            <span className="text-xs text-neutral-500">({filteredAgreements.length})</span>
           </div>
 
-          {/* Quick Segment Filter */}
+          {/* Quick Segment Filter Buttons */}
           <div className="flex items-center overflow-x-auto no-scrollbar gap-1 bg-[#141416] p-1 rounded-xl border border-[#202024]">
             {[
               { id: 'all', label: 'All' },
               { id: 'needs_funding', label: 'Needs Funding' },
               { id: 'needs_evidence', label: 'Submit Proof' },
-              { id: 'needs_verify', label: 'Verify Audit' },
+              { id: 'needs_verify', label: 'Verify DoD' },
               { id: 'ready_settle', label: 'Ready Disbursal' },
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`px-2.5 py-1 text-[11px] rounded-lg font-medium whitespace-nowrap transition-colors ${
+                className={`px-2.5 py-1 text-[11px] rounded-lg font-medium whitespace-nowrap transition-all ${
                   activeTab === tab.id
-                    ? 'bg-[#202024] text-white font-semibold'
+                    ? 'bg-violet-600 text-white font-bold shadow-sm'
                     : 'text-neutral-400 hover:text-white'
                 }`}
               >
@@ -299,16 +295,16 @@ export default function OverviewCommandPage() {
 
         {/* Agreement Interactive Cards List */}
         {isLoading ? (
-          <div className="py-12 text-center text-xs text-neutral-400">Loading protocol state...</div>
+          <div className="py-10 text-center text-xs text-neutral-400">Loading agreements...</div>
         ) : filteredAgreements.length === 0 ? (
-          <div className="py-12 text-center text-xs text-neutral-500 space-y-2">
-            <p>No agreements match the selected pipeline filter.</p>
+          <div className="py-10 text-center text-xs text-neutral-500 space-y-2">
+            <p>No agreements match the selected filter.</p>
             <Button variant="outline" size="sm" onClick={() => setActiveTab('all')}>
-              View All Agreements
+              Show All
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 gap-3.5">
             {filteredAgreements.map((agreement) => {
               const settledAmount = agreement.milestones
                 .filter((m) => m.state === MilestoneState.RELEASED)
@@ -317,7 +313,7 @@ export default function OverviewCommandPage() {
               return (
                 <div
                   key={agreement.publicKey}
-                  className="bg-[#141416] border border-[#202024] hover:border-[#26262a] rounded-2xl p-4 sm:p-5 transition-all space-y-4"
+                  className="bg-[#141416] border border-[#202024] hover:border-violet-500/30 rounded-2xl p-4 sm:p-5 transition-all space-y-3.5"
                 >
                   {/* Agreement Header */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#202024] pb-3">
@@ -325,13 +321,13 @@ export default function OverviewCommandPage() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <Link
                           href={`/agreements/${agreement.publicKey}`}
-                          className="font-bold text-sm sm:text-base text-white hover:text-cyan-300 transition-colors"
+                          className="font-bold text-sm sm:text-base text-white hover:text-violet-300 transition-colors"
                         >
                           {agreement.title}
                         </Link>
                         <AgreementStateBadge state={agreement.state} />
                       </div>
-                      <div className="flex items-center gap-3 text-[11px] text-neutral-400 font-mono">
+                      <div className="flex items-center gap-2.5 text-[11px] text-neutral-400 font-mono">
                         <span>Worker: {truncateAddress(agreement.worker, 4)}</span>
                         <span>•</span>
                         <span>Sponsor: {truncateAddress(agreement.sponsor, 4)}</span>
@@ -354,7 +350,6 @@ export default function OverviewCommandPage() {
                           variant="primary"
                           size="sm"
                           onClick={() => openDrawer('fund', agreement)}
-                          className="bg-emerald-400 hover:bg-emerald-300 text-black font-bold"
                         >
                           <Lock className="w-3.5 h-3.5 mr-1" />
                           Fund Escrow
@@ -362,11 +357,9 @@ export default function OverviewCommandPage() {
                       )}
 
                       <Button
-                        variant="outline"
+                        variant="secondary"
                         size="sm"
                         onClick={() => openDrawer('inspect', agreement)}
-                        className="text-neutral-300 border-[#26262a]"
-                        title="Inspect on-chain PDAs and commitments"
                       >
                         Inspect
                       </Button>
@@ -375,19 +368,15 @@ export default function OverviewCommandPage() {
 
                   {/* Interactive Milestones Pipeline Track */}
                   <div className="space-y-2">
-                    <span className="text-[10px] text-neutral-400 uppercase tracking-wider font-semibold block">
-                      Milestone Execution Track ({agreement.milestones.length})
-                    </span>
-
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
                       {agreement.milestones.map((m) => (
                         <div
                           key={m.publicKey}
-                          className="bg-[#0d0d0f] border border-[#202024] rounded-xl p-3 flex flex-col justify-between space-y-2 hover:border-[#2a2a30] transition-colors"
+                          className="bg-[#0d0d0f] border border-[#202024] rounded-xl p-3 flex flex-col justify-between space-y-2 hover:border-violet-500/30 transition-colors"
                         >
                           <div className="space-y-1">
                             <div className="flex items-center justify-between gap-1">
-                              <span className="text-[10px] font-bold text-neutral-400">#{m.index}</span>
+                              <span className="text-[10px] font-bold text-neutral-400">#{m.index + 1}</span>
                               <MilestoneStateBadge state={m.state} />
                             </div>
                             <h4 className="text-xs font-semibold text-neutral-200 line-clamp-1">
@@ -399,7 +388,7 @@ export default function OverviewCommandPage() {
                           </div>
 
                           {/* Action Button depending on milestone state */}
-                          <div className="pt-2 border-t border-[#1a1a1e] flex items-center justify-between gap-2">
+                          <div className="pt-2 border-t border-[#1a1a1e]">
                             {m.state === MilestoneState.PENDING && (
                               <Button
                                 variant="outline"
@@ -417,7 +406,7 @@ export default function OverviewCommandPage() {
                                 variant="primary"
                                 size="sm"
                                 onClick={() => openDrawer('verify', agreement, m)}
-                                className="w-full bg-cyan-400 hover:bg-cyan-300 text-black font-semibold text-[11px] py-1.5"
+                                className="w-full text-[11px] py-1.5"
                               >
                                 <ShieldCheck className="w-3 h-3 mr-1" />
                                 Verify DoD
@@ -429,7 +418,7 @@ export default function OverviewCommandPage() {
                                 variant="primary"
                                 size="sm"
                                 onClick={() => openDrawer('release', agreement, m)}
-                                className="w-full bg-emerald-400 hover:bg-emerald-300 text-black font-semibold text-[11px] py-1.5"
+                                className="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-semibold text-[11px] py-1.5"
                               >
                                 <Coins className="w-3 h-3 mr-1" />
                                 Disburse USDC
@@ -438,13 +427,13 @@ export default function OverviewCommandPage() {
 
                             {m.state === MilestoneState.RELEASED && (
                               <Button
-                                variant="outline"
+                                variant="secondary"
                                 size="sm"
                                 onClick={() => openDrawer('inspect', agreement, m)}
-                                className="w-full text-neutral-400 border-[#26262a] text-[11px] py-1.5"
+                                className="w-full text-neutral-400 text-[11px] py-1.5"
                               >
-                                <CheckCircle2 className="w-3 h-3 mr-1 text-emerald-400" />
-                                Settled • Inspect
+                                <CheckCircle2 className="w-3 h-3 mr-1 text-violet-400" />
+                                Settled
                               </Button>
                             )}
                           </div>
@@ -460,31 +449,31 @@ export default function OverviewCommandPage() {
       </section>
 
       {/* 4. RECENT VERIFIABLE ACTIVITY LEDGER */}
-      <section className="bg-[#0d0d0f] border border-[#26262a] rounded-2xl p-4 sm:p-5 space-y-4">
+      <section className="bg-[#0d0d0f] border border-[#26262a] rounded-2xl p-4 sm:p-5 space-y-3.5">
         <div className="flex items-center justify-between border-b border-[#26262a] pb-3">
           <div className="flex items-center gap-2">
-            <Activity className="w-4 h-4 text-emerald-400" />
-            <h2 className="text-sm font-bold text-white uppercase tracking-wider">
-              On-Chain Settlement Activity Feed
+            <Activity className="w-4 h-4 text-violet-400" />
+            <h2 className="text-xs font-bold text-white uppercase tracking-wider">
+              Recent Settlements
             </h2>
           </div>
           <Link
             href="/agreements"
             className="text-xs text-neutral-400 hover:text-white inline-flex items-center gap-1 transition-colors"
           >
-            <span>View Catalog</span>
+            <span>Catalog</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 
         {recentMilestones.length === 0 ? (
-          <div className="py-6 text-center text-xs text-neutral-500">No protocol events recorded.</div>
+          <div className="py-6 text-center text-xs text-neutral-500">No settlement events yet.</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
                 <tr className="border-b border-[#202024] text-neutral-400 uppercase text-[10px]">
-                  <th className="pb-2.5 font-semibold">Agreement & Milestone</th>
+                  <th className="pb-2.5 font-semibold">Milestone</th>
                   <th className="pb-2.5 font-semibold">Worker</th>
                   <th className="pb-2.5 font-semibold">Amount</th>
                   <th className="pb-2.5 font-semibold">Status</th>
@@ -497,7 +486,7 @@ export default function OverviewCommandPage() {
                     <td className="py-2.5 pr-3">
                       <Link
                         href={`/agreements/${agreementId}`}
-                        className="font-semibold text-neutral-200 hover:text-cyan-300 block truncate max-w-xs"
+                        className="font-semibold text-neutral-200 hover:text-violet-300 block truncate max-w-xs"
                       >
                         {milestone.title}
                       </Link>
@@ -520,7 +509,7 @@ export default function OverviewCommandPage() {
                           href={getExplorerUrl(milestone.settlementTx, 'tx')}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-cyan-400 hover:underline inline-flex items-center gap-1 text-[11px]"
+                          className="text-violet-400 hover:underline inline-flex items-center gap-1 text-[11px]"
                         >
                           {truncateAddress(milestone.settlementTx, 4)}
                           <ExternalLink className="w-2.5 h-2.5" />
@@ -537,7 +526,7 @@ export default function OverviewCommandPage() {
         )}
       </section>
 
-      {/* Slide-out Drawer for Inspections & Actions (NO MODALS!) */}
+      {/* Contextual Right Flyout / Bottom Drawer */}
       {drawerState.agreement && (
         <QuickActionModal
           isOpen={drawerState.isOpen}
@@ -556,7 +545,7 @@ export default function OverviewCommandPage() {
         />
       )}
 
-      {/* Top Drawer for Transaction Execution State */}
+      {/* Top Drawer Transaction Execution */}
       <TxStateModal state={txState} isOpen={isTxOpen} onClose={resetTx} />
     </div>
   );

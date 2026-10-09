@@ -23,6 +23,7 @@ import {
   Hash,
   Copy,
   Check,
+  Sparkles,
 } from 'lucide-react';
 import { MilestoneStateBadge } from '../ui/Badge';
 
@@ -191,11 +192,11 @@ export function QuickActionModal({
   };
 
   const titles: Record<QuickActionType, string> = {
-    fund: 'Fund Protocol Escrow Vault',
-    submit_evidence: `Submit Evidence — Milestone #${milestone?.index ?? 0}`,
+    fund: 'Fund Escrow Vault',
+    submit_evidence: `Submit Proof — Milestone #${milestone?.index ?? 0}`,
     verify: `Verification Audit — Milestone #${milestone?.index ?? 0}`,
     release: `Release Settlement — Milestone #${milestone?.index ?? 0}`,
-    inspect: `On-Chain Inspector — ${milestone ? `Milestone #${milestone.index}` : 'Agreement Account'}`,
+    inspect: `On-Chain Inspector — ${milestone ? `Milestone #${milestone.index}` : 'Agreement'}`,
   };
 
   const subtitles: Record<QuickActionType, string> = {
@@ -213,7 +214,7 @@ export function QuickActionModal({
       title={titles[actionType]}
       subtitle={subtitles[actionType]}
     >
-      <div className="space-y-5 text-xs font-mono">
+      <div className="space-y-4 text-xs font-mono">
         {/* INSPECT PROTOCOL RECORD */}
         {actionType === 'inspect' && (
           <div className="space-y-4">
@@ -235,8 +236,8 @@ export function QuickActionModal({
               </div>
               {milestone && (
                 <div className="flex items-center justify-between border-t border-[#26262a] pt-2">
-                  <span className="text-neutral-400">VERIFICATION TYPE:</span>
-                  <span className="text-neutral-300 font-semibold uppercase">{milestone.verificationType}</span>
+                  <span className="text-neutral-400">VERIFICATION:</span>
+                  <span className="text-violet-300 font-semibold uppercase">{milestone.verificationType}</span>
                 </div>
               )}
             </div>
@@ -246,11 +247,11 @@ export function QuickActionModal({
               <span className="text-[10px] text-neutral-400 uppercase tracking-wider block font-semibold">
                 On-Chain Accounts & Derived PDAs
               </span>
-              <div className="bg-[#141416] border border-[#202024] rounded-xl p-3 space-y-2.5 text-[11px]">
+              <div className="bg-[#141416] border border-[#202024] rounded-xl p-3 space-y-2 text-[11px]">
                 <div className="flex items-center justify-between">
                   <span className="text-neutral-400">Vault PDA:</span>
                   <div className="flex items-center gap-1.5">
-                    <span className="text-cyan-300 font-mono">{truncateAddress(agreement.vaultPda, 5)}</span>
+                    <span className="text-violet-300 font-mono">{truncateAddress(agreement.vaultPda, 5)}</span>
                     <button
                       onClick={() => copyText(agreement.vaultPda, 'vault')}
                       className="text-neutral-400 hover:text-white"
@@ -295,9 +296,9 @@ export function QuickActionModal({
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] text-neutral-400 uppercase tracking-wider font-semibold">
-                    Definition of Done (DoD) Criteria
+                    DoD Checklist ({milestone.dodCriteria.length})
                   </span>
-                  <span className="text-[10px] text-neutral-500 font-mono">
+                  <span className="text-[10px] text-violet-400 font-mono">
                     SHA-256: {truncateAddress(milestone.dodHash, 4)}
                   </span>
                 </div>
@@ -305,7 +306,7 @@ export function QuickActionModal({
                   {milestone.dodCriteria.map((crit, idx) => (
                     <div
                       key={idx}
-                      className="p-2.5 rounded-xl bg-[#141416] border border-[#202024] flex items-start gap-2.5"
+                      className="p-2.5 rounded-xl bg-[#141416] border border-[#202024] flex items-start gap-2"
                     >
                       <span className="text-emerald-400 font-bold">✓</span>
                       <span className="text-neutral-300 text-[11px] leading-relaxed">{crit}</span>
@@ -324,7 +325,7 @@ export function QuickActionModal({
                 <div className="p-3 bg-[#141416] border border-[#202024] rounded-xl space-y-2 text-[11px]">
                   <div className="flex justify-between">
                     <span className="text-neutral-400">Evidence Hash:</span>
-                    <span className="text-cyan-300 font-mono">{truncateAddress(milestone.evidence.evidenceHash, 6)}</span>
+                    <span className="text-violet-300 font-mono">{truncateAddress(milestone.evidence.evidenceHash, 6)}</span>
                   </div>
                   <div>
                     <span className="text-neutral-400 block mb-0.5">Worker Notes:</span>
@@ -336,7 +337,7 @@ export function QuickActionModal({
                         href={milestone.evidence.metadataUri}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-cyan-400 hover:underline inline-flex items-center gap-1"
+                        className="text-violet-400 hover:underline inline-flex items-center gap-1"
                       >
                         <span>View Arweave Artifact</span>
                         <ExternalLink className="w-3 h-3" />
@@ -349,17 +350,17 @@ export function QuickActionModal({
 
             {/* Settlement transaction details if released */}
             {milestone?.settlementTx && (
-              <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl space-y-1.5">
-                <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider block">
+              <div className="p-3 bg-violet-500/10 border border-violet-500/25 rounded-xl space-y-1.5">
+                <span className="text-[10px] text-violet-300 font-bold uppercase tracking-wider block">
                   Disbursed & Finalized
                 </span>
                 <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-neutral-400">Settlement Signature:</span>
+                  <span className="text-neutral-400">Settlement Tx:</span>
                   <a
                     href={getExplorerUrl(milestone.settlementTx, 'tx')}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-emerald-300 hover:underline inline-flex items-center gap-1 font-mono"
+                    className="text-violet-300 hover:underline inline-flex items-center gap-1 font-mono"
                   >
                     {truncateAddress(milestone.settlementTx, 5)}
                     <ExternalLink className="w-3 h-3" />
@@ -397,7 +398,7 @@ export function QuickActionModal({
                   <Button
                     variant="primary"
                     size="sm"
-                    className="w-full"
+                    className="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-bold"
                     onClick={() => onSwitchAction('release', milestone)}
                   >
                     <Coins className="w-4 h-4 mr-2" />
@@ -412,16 +413,13 @@ export function QuickActionModal({
         {/* FUND ESCROW */}
         {actionType === 'fund' && (
           <div className="space-y-4">
-            <p className="text-neutral-400">
-              Lock required milestone budget from your wallet into the program&apos;s Escrow Vault PDA.
-            </p>
             <div className="p-4 bg-[#141416] border border-[#202024] rounded-xl space-y-2.5">
               <div className="flex justify-between">
                 <span className="text-neutral-400">AGREEMENT:</span>
                 <span className="font-bold text-neutral-200 truncate max-w-[200px]">{agreement.title}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-neutral-400">TOTAL REQUIRED:</span>
+                <span className="text-neutral-400">REQUIRED BUDGET:</span>
                 <span className="font-bold text-emerald-400 text-sm">
                   ${formatUsdc(agreement.totalAmountUsdc)} USDC
                 </span>
@@ -434,20 +432,20 @@ export function QuickActionModal({
 
             {usdcBalance < agreement.totalAmountUsdc && (
               <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-300 space-y-2">
-                <span className="text-[11px] block">Need more Devnet USDC to fund this escrow?</span>
+                <span className="text-[11px] block">Need Devnet USDC to fund this escrow?</span>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => requestDevnetUsdcFaucet(agreement.totalAmountUsdc)}
-                  className="w-full text-cyan-300 border-[#26262a]"
+                  className="w-full text-violet-300 border-violet-500/30 hover:bg-violet-950/30"
                 >
-                  <Droplets className="w-3.5 h-3.5 mr-1" />
+                  <Droplets className="w-3.5 h-3.5 mr-1 text-violet-400" />
                   Top Up +${formatUsdc(agreement.totalAmountUsdc)} USDC
                 </Button>
               </div>
             )}
 
-            <div className="pt-4 border-t border-[#26262a] flex justify-end gap-2">
+            <div className="pt-3 border-t border-[#26262a] flex justify-end gap-2">
               <Button variant="outline" size="sm" onClick={onClose} disabled={isProcessing}>
                 Cancel
               </Button>
@@ -466,13 +464,44 @@ export function QuickActionModal({
 
         {/* SUBMIT EVIDENCE */}
         {actionType === 'submit_evidence' && milestone && (
-          <div className="space-y-4">
-            <div className="p-3 bg-[#141416] border border-[#202024] rounded-xl text-[11px] space-y-1">
-              <span className="text-neutral-400">TARGET MILESTONE:</span>
-              <p className="font-semibold text-neutral-200">{milestone.title}</p>
-              <span className="text-emerald-400 font-bold block mt-1">
-                Amount: ${formatUsdc(milestone.amountUsdc)} USDC
+          <div className="space-y-3.5">
+            <div className="p-3 bg-[#141416] border border-[#202024] rounded-xl text-[11px] flex items-center justify-between">
+              <div>
+                <span className="text-neutral-400 block text-[10px]">TARGET MILESTONE:</span>
+                <span className="font-semibold text-neutral-200">{milestone.title}</span>
+              </div>
+              <span className="text-emerald-400 font-bold">
+                ${formatUsdc(milestone.amountUsdc)} USDC
               </span>
+            </div>
+
+            {/* Quick Proof Buttons */}
+            <div className="space-y-1">
+              <span className="text-[10px] text-neutral-400 uppercase font-semibold">Quick Proof Presets:</span>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDeliverableLink('https://github.com/done-protocol/core/pull/88');
+                    setMetadataUri('https://arweave.net/tx_contract_audit_report_v1.tar.gz');
+                    setEvidenceNotes('Completed and passed 100% tests against committed DoD criteria.');
+                  }}
+                  className="px-2 py-1 rounded-lg bg-[#141416] hover:bg-violet-900/30 text-[10px] text-neutral-300 hover:text-violet-300 border border-[#26262a]"
+                >
+                  🐙 PR #88 Merged
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDeliverableLink('https://github.com/done-protocol/core/commit/9f38a1');
+                    setMetadataUri('https://ipfs.io/ipfs/bafybeic7...audit_artifacts');
+                    setEvidenceNotes('Slither and Trident invariant test suite executed successfully.');
+                  }}
+                  className="px-2 py-1 rounded-lg bg-[#141416] hover:bg-violet-900/30 text-[10px] text-neutral-300 hover:text-violet-300 border border-[#26262a]"
+                >
+                  📦 IPFS Artifacts
+                </button>
+              </div>
             </div>
 
             <Input
@@ -490,21 +519,22 @@ export function QuickActionModal({
             />
 
             <Textarea
-              label="EVIDENCE SUMMARY & NOTES"
-              rows={3}
+              label="EVIDENCE SUMMARY"
+              rows={2}
               value={evidenceNotes}
               onChange={(e) => setEvidenceNotes(e.target.value)}
-              placeholder="Describe work completed against criteria..."
             />
 
-            <div className="p-3 bg-[#141416] border border-[#202024] rounded-xl space-y-1">
-              <span className="text-[10px] text-neutral-400 uppercase">Live Canonical Evidence SHA-256:</span>
-              <p className="font-mono text-[11px] text-cyan-300 truncate">
-                {computedEvidenceHash || 'Calculating pre-image hash...'}
-              </p>
-            </div>
+            {computedEvidenceHash && (
+              <div className="p-2 bg-[#141416] border border-[#202024] rounded-xl flex items-center justify-between text-[11px]">
+                <span className="text-neutral-400">Canonical SHA-256:</span>
+                <span className="font-mono text-violet-300">
+                  {truncateAddress(computedEvidenceHash, 6)}
+                </span>
+              </div>
+            )}
 
-            <div className="pt-4 border-t border-[#26262a] flex justify-end gap-2">
+            <div className="pt-3 border-t border-[#26262a] flex justify-end gap-2">
               <Button variant="outline" size="sm" onClick={onClose} disabled={isProcessing}>
                 Cancel
               </Button>
@@ -523,24 +553,21 @@ export function QuickActionModal({
 
         {/* VERIFICATION ENGINE */}
         {actionType === 'verify' && milestone && (
-          <div className="space-y-4">
-            <div className="p-3 bg-[#141416] border border-[#202024] rounded-xl space-y-1 text-[11px]">
-              <span className="text-neutral-400">TARGET MILESTONE:</span>
-              <p className="font-semibold text-neutral-200">{milestone.title}</p>
-              {milestone.evidence && (
-                <div className="mt-1 pt-1 border-t border-[#26262a]">
-                  <span className="text-neutral-400">Worker Evidence Hash: </span>
-                  <span className="text-cyan-300 font-mono">
-                    {truncateAddress(milestone.evidence.evidenceHash, 6)}
-                  </span>
-                </div>
-              )}
+          <div className="space-y-3.5">
+            <div className="p-3 bg-[#141416] border border-[#202024] rounded-xl text-[11px] flex items-center justify-between">
+              <div>
+                <span className="text-neutral-400 block text-[10px]">AUDITING MILESTONE:</span>
+                <span className="font-semibold text-neutral-200">{milestone.title}</span>
+              </div>
+              <span className="text-emerald-400 font-bold">
+                ${formatUsdc(milestone.amountUsdc)} USDC
+              </span>
             </div>
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-neutral-400 font-semibold text-[11px]">
-                  AUDIT DEFINITION OF DONE CHECKLIST:
+                <span className="text-neutral-300 font-semibold text-[11px]">
+                  CRITERIA CHECKLIST:
                 </span>
                 <button
                   type="button"
@@ -551,26 +578,29 @@ export function QuickActionModal({
                     });
                     setCheckedCriteria(all);
                   }}
-                  className="text-[10px] text-cyan-300 bg-[#141416] px-2 py-0.5 rounded-lg border border-[#26262a]"
+                  className="text-[10px] text-violet-300 bg-[#141416] hover:bg-violet-900/40 px-2 py-0.5 rounded-lg border border-violet-500/30 font-bold"
                 >
-                  ⚡ Check All Criteria
+                  ⚡ Pass All (1-Click)
                 </button>
               </div>
+
               {milestone.dodCriteria.map((crit, idx) => (
                 <div
                   key={idx}
                   onClick={() =>
                     setCheckedCriteria((prev) => ({ ...prev, [idx]: !prev[idx] }))
                   }
-                  className={`p-2.5 border rounded-xl cursor-pointer flex items-center gap-2.5 transition-colors ${
+                  className={`p-2.5 border rounded-xl cursor-pointer flex items-center gap-2.5 transition-all ${
                     checkedCriteria[idx]
-                      ? 'bg-[#141416] border-emerald-500/50 text-neutral-100'
-                      : 'bg-[#0d0d0f] border-[#26262a] text-neutral-400'
+                      ? 'bg-[#141416] border-violet-500/60 text-neutral-100 shadow-sm'
+                      : 'bg-[#0d0d0f] border-[#26262a] text-neutral-400 hover:border-[#383840]'
                   }`}
                 >
                   <div
-                    className={`w-4 h-4 border rounded flex items-center justify-center flex-shrink-0 ${
-                      checkedCriteria[idx] ? 'bg-emerald-500 border-emerald-500 text-black' : 'border-[#26262a]'
+                    className={`w-4 h-4 rounded-md flex items-center justify-center flex-shrink-0 text-xs font-bold ${
+                      checkedCriteria[idx]
+                        ? 'bg-violet-600 text-white'
+                        : 'border border-[#26262a]'
                     }`}
                   >
                     {checkedCriteria[idx] && '✓'}
@@ -587,7 +617,7 @@ export function QuickActionModal({
               onChange={(e) => setVerificationNotes(e.target.value)}
             />
 
-            <div className="pt-4 border-t border-[#26262a] flex justify-end gap-2">
+            <div className="pt-3 border-t border-[#26262a] flex justify-end gap-2">
               <Button variant="outline" size="sm" onClick={onClose} disabled={isProcessing}>
                 Cancel
               </Button>
@@ -615,20 +645,16 @@ export function QuickActionModal({
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-neutral-400">RECIPIENT WORKER:</span>
+                <span className="text-neutral-400">RECIPIENT:</span>
                 <span className="font-mono text-neutral-300">{truncateAddress(agreement.worker, 6)}</span>
               </div>
               <div className="flex justify-between border-t border-[#26262a] pt-2">
-                <span className="text-neutral-400">STATUS:</span>
-                <span className="text-emerald-400 font-bold uppercase">Criteria Verified ✓</span>
+                <span className="text-neutral-400">VERIFICATION:</span>
+                <span className="text-emerald-400 font-bold uppercase">Criteria Passed ✓</span>
               </div>
             </div>
 
-            <p className="text-neutral-400 text-[11px]">
-              Executing this instruction calls the Escrow Vault PDA to transfer ${formatUsdc(milestone.amountUsdc)} USDC directly into the worker&apos;s token account.
-            </p>
-
-            <div className="pt-4 border-t border-[#26262a] flex justify-end gap-2">
+            <div className="pt-3 border-t border-[#26262a] flex justify-end gap-2">
               <Button variant="outline" size="sm" onClick={onClose} disabled={isProcessing}>
                 Cancel
               </Button>
@@ -638,8 +664,9 @@ export function QuickActionModal({
                 onClick={handleRelease}
                 disabled={isProcessing}
                 isLoading={isProcessing}
+                className="bg-emerald-500 hover:bg-emerald-400 text-black font-bold"
               >
-                Disburse ${formatUsdc(milestone.amountUsdc)} USDC
+                Release ${formatUsdc(milestone.amountUsdc)} USDC
               </Button>
             </div>
           </div>

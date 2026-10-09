@@ -3,11 +3,13 @@
 ## 1. Design Principles & Aesthetic Invariants
 
 * **Pitch-Black Dark Mode Only:** Absolute pure black base surfaces (`#000000`), deep ash surface containers (`#0d0d0f`, `#141416`), and subtle border dividers (`#26262a`).
+* **Primary Accent Color: VIOLET:** Rich radiant violet accents (`violet-500` / `#8b5cf6`, `violet-600` / `#7c3aed`, `violet-400` / `#a78bfa`, `border-violet-500/30`, `bg-violet-600`). All primary actions, state badges, brand marks, and active toggles use violet.
 * **Ample Gentle Curvature:** Zero sharp industrial 90-degree corners. Use balanced, organic border radii (`rounded-2xl` / `16px` for cards and panels; `rounded-xl` / `12px` for buttons, inputs, and badges; `rounded-3xl` / `24px` for bottom drawers and sheets).
 * **Zero Floating Popups / Modals:** Absolutely no centered modal dialog popups or intrusive backdrop alert boxes.
   * **Desktop:** Flyouts and detailed inspection occur strictly via **Right Sidebars** (`w-[440px]`) or slide-down **Top Drawers**.
   * **Mobile:** Complex interactions occur strictly via swipeable **Bottom Drawers** (`max-h-[85vh]`).
-* **Raw Functionality Over Fluff:** Zero marketing hype, filler illustrations, or verbose copy. High data density, crisp monospace cryptographic identifiers, unambiguous state badges, and direct protocol interaction flows.
+* **Button-First Controls & Aggressive Text Reduction:** No terminal essay outputs or documentation walls of text. High data density, instant 1-click preset buttons, segmented pills, quick-increment buttons, and direct protocol interaction flows.
+* **Agent Skill Location:** Repository agent skill specification resides in `.agents/skills/done_protocol/SKILL.md`.
 
 ---
 

@@ -21,9 +21,9 @@ export function TxStateModal({ state, isOpen, onClose }: TxStateModalProps) {
       <div className="w-full max-w-2xl bg-[#0d0d0f] border border-[#26262a] rounded-2xl shadow-2xl p-4 sm:p-5 pointer-events-auto animate-in slide-in-from-top duration-300">
         <div className="flex items-center justify-between pb-3 border-b border-[#26262a]">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
             <span className="text-xs font-semibold uppercase text-neutral-300 tracking-wider">
-              Solana Devnet Transaction Dispatch
+              Solana Devnet Dispatch
             </span>
           </div>
           <button
@@ -49,7 +49,7 @@ export function TxStateModal({ state, isOpen, onClose }: TxStateModalProps) {
               </span>
             )}
             {state.status === 'confirming' && (
-              <span className="px-2.5 py-1 text-xs rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 animate-pulse">
+              <span className="px-2.5 py-1 text-xs rounded-lg bg-violet-500/15 text-violet-300 border border-violet-500/30 animate-pulse">
                 Confirming Block...
               </span>
             )}
@@ -74,7 +74,7 @@ export function TxStateModal({ state, isOpen, onClose }: TxStateModalProps) {
                   href={getExplorerUrl(state.signature, 'tx')}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-cyan-400 hover:underline inline-flex items-center gap-1 text-[11px]"
+                  className="text-violet-400 hover:underline inline-flex items-center gap-1 text-[11px]"
                 >
                   {truncateAddress(state.signature, 8)}
                   <ExternalLink className="w-3 h-3" />

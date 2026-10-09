@@ -3,7 +3,7 @@ import { AgreementState, MilestoneState, VerificationType } from '@/types/protoc
 
 interface BadgeProps {
   children: React.ReactNode;
-  variant?: 'draft' | 'active' | 'verified' | 'released' | 'danger' | 'neutral';
+  variant?: 'draft' | 'active' | 'verified' | 'released' | 'danger' | 'neutral' | 'violet';
   className?: string;
 }
 
@@ -13,7 +13,8 @@ export function Badge({ children, variant = 'neutral', className = '' }: BadgePr
     draft: 'bg-neutral-800 text-neutral-300 border border-neutral-700/60',
     active: 'bg-amber-500/10 text-amber-400 border border-amber-500/20',
     verified: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
-    released: 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20',
+    released: 'bg-violet-500/10 text-violet-300 border border-violet-500/30',
+    violet: 'bg-violet-500/10 text-violet-300 border border-violet-500/30',
     danger: 'bg-red-500/10 text-red-400 border border-red-500/20',
   };
 
@@ -69,7 +70,7 @@ export function MilestoneStateBadge({ state }: { state: MilestoneState }) {
     case MilestoneState.RELEASED:
       return (
         <Badge variant="released">
-          <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
+          <span className="w-1.5 h-1.5 rounded-full bg-violet-400" />
           RELEASED
         </Badge>
       );

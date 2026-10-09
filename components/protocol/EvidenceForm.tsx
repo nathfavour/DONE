@@ -109,7 +109,7 @@ export function EvidenceForm({ agreementKey, milestone, onExecute }: EvidenceFor
                 'https://arweave.net/tx_indexer_geyser_final_v1.tar.gz',
               ]);
             }}
-            className="text-[10px] bg-[#141416] hover:bg-[#1a1a1e] text-cyan-300 px-2.5 py-1 rounded-lg border border-[#26262a]"
+            className="text-[10px] bg-[#141416] hover:bg-violet-950/40 text-violet-300 px-2.5 py-1 rounded-lg border border-[#26262a] hover:border-violet-500/40"
           >
             ⚡ Auto-Fill Demo Proof
           </button>
@@ -131,7 +131,7 @@ export function EvidenceForm({ agreementKey, milestone, onExecute }: EvidenceFor
             <ul className="space-y-1.5 text-xs text-neutral-300">
               {milestone.dodCriteria.map((c, i) => (
                 <li key={i} className="flex items-start gap-2">
-                  <span className="text-cyan-400 font-bold flex-shrink-0">[{i + 1}]</span>
+                  <span className="text-violet-400 font-bold flex-shrink-0">[{i + 1}]</span>
                   <span>{c}</span>
                 </li>
               ))}

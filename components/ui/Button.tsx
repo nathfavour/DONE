@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'destructive' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'destructive' | 'ghost' | 'violet';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
 }
@@ -9,15 +9,17 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ children, variant = 'primary', size = 'md', isLoading = false, className = '', disabled, ...props }, ref) => {
     const base =
-      'inline-flex items-center justify-center font-mono font-medium transition-colors focus:outline-none focus:ring-1 focus:ring-neutral-400 disabled:opacity-40 disabled:cursor-not-allowed select-none rounded-xl tracking-wide text-xs sm:text-sm';
+      'inline-flex items-center justify-center font-mono font-medium transition-all focus:outline-none focus:ring-2 focus:ring-violet-500/40 disabled:opacity-40 disabled:cursor-not-allowed select-none rounded-xl tracking-wide text-xs sm:text-sm active:scale-[0.98]';
 
     const variants = {
       primary:
-        'bg-white text-black font-semibold hover:bg-neutral-200 transition-colors shadow-sm',
+        'bg-violet-600 text-white font-semibold hover:bg-violet-500 active:bg-violet-700 shadow-lg shadow-violet-600/25 border border-violet-500/40',
+      violet:
+        'bg-violet-600 text-white font-semibold hover:bg-violet-500 active:bg-violet-700 shadow-lg shadow-violet-600/25 border border-violet-500/40',
       secondary:
-        'bg-transparent border border-[#26262a] text-neutral-200 hover:bg-[#141416]',
+        'bg-[#141416] border border-[#26262a] text-neutral-200 hover:bg-[#1c1c20] hover:border-[#323238] hover:text-white',
       outline:
-        'bg-transparent border border-[#26262a] text-neutral-200 hover:bg-[#141416]',
+        'bg-transparent border border-[#26262a] text-neutral-200 hover:bg-[#141416] hover:border-violet-500/30',
       danger:
         'bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20',
       destructive:

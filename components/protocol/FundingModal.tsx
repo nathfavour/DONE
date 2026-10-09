@@ -76,7 +76,7 @@ export function FundingModal({ agreement, isOpen, onClose, onExecute }: FundingM
           </div>
           <div className="flex justify-between items-center pt-2 border-t border-[#26262a]">
             <span className="text-neutral-400">VAULT PDA:</span>
-            <span className="text-cyan-400 font-mono text-[11px] truncate max-w-[200px]">
+            <span className="text-violet-300 font-mono text-[11px] truncate max-w-[200px]">
               {agreement.vaultPda}
             </span>
           </div>
@@ -96,10 +96,10 @@ export function FundingModal({ agreement, isOpen, onClose, onExecute }: FundingM
             <Button
               variant="outline"
               size="sm"
-              className="w-full text-xs text-cyan-300 border-[#26262a]"
+              className="w-full text-xs text-violet-300 border-violet-500/30 hover:bg-violet-950/30"
               onClick={() => requestDevnetUsdcFaucet(totalRequired)}
             >
-              <Droplets className="w-3.5 h-3.5 mr-1 text-cyan-400" />
+              <Droplets className="w-3.5 h-3.5 mr-1 text-violet-400" />
               Airdrop +${formatUsdc(totalRequired)} Devnet USDC
             </Button>
           </div>
