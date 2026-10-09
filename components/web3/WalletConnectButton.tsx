@@ -1,26 +1,30 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useWallet, WalletRole } from './WalletContext';
-import { truncateAddress, formatUsdc } from '@/lib/solana';
+import { useWallet } from './WalletContext';
+import { truncateAddress, formatUsdc, getExplorerUrl } from '@/lib/solana';
 import { Button } from '../ui/Button';
-import { ChevronDown, Copy, Check, Droplets, UserCheck, Shield } from 'lucide-react';
+import { ChevronDown, Copy, Check, ExternalLink, Droplets, Wallet, ShieldCheck, RefreshCw } from 'lucide-react';
+import { DoneLogo } from '../protocol/DoneLogo';
 
 export function WalletConnectButton() {
   const {
     connected,
+    isConnecting,
     publicKeyString,
-    role,
+    walletName,
     usdcBalance,
     solBalance,
     connect,
-    switchRole,
+    disconnect,
     requestDevnetUsdcFaucet,
     requestDevnetSolAirdrop,
+    refreshBalances,
   } = useWallet();
 
   const [isOpen, setIsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isAirdropping, setIsAirdropping] = useState(false);
   const [faucetSuccess, setFaucetSuccess] = useState(false);
 
   const handleCopy = () => {
@@ -30,116 +34,142 @@ export function WalletConnectButton() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleFaucet = () => {
-    requestDevnetUsdcFaucet(5_000_000_000); // 5,000 USDC
-    requestDevnetSolAirdrop();
-    setFaucetSuccess(true);
-    setTimeout(() => setFaucetSuccess(false), 2500);
+  const handleAirdropSol = async () => {
+    setIsAirdropping(true);
+    await requestDevnetSolAirdrop();
+    setIsAirdropping(false);
   };
 
-  const roleLabels: Record<WalletRole, { name: string; color: string }> = {
-    sponsor: { name: 'Sponsor (Capital)', color: 'text-cyan-400' },
-    worker: { name: 'Worker (Builder)', color: 'text-amber-400' },
-    oracle: { name: 'Oracle / Verifier', color: 'text-purple-400' },
-    custom: { name: 'Custom Keypair', color: 'text-zinc-400' },
+  const handleFaucetUsdc = () => {
+    requestDevnetUsdcFaucet(5_000_000_000);
+    setFaucetSuccess(true);
+    setTimeout(() => setFaucetSuccess(false), 2000);
   };
 
   if (!connected) {
     return (
-      <Button variant="primary" size="sm" onClick={() => connect('sponsor')}>
-        Connect Devnet Wallet
+      <Button
+        variant="primary"
+        size="sm"
+        isLoading={isConnecting}
+        onClick={() => connect()}
+        className="flex items-center gap-2"
+      >
+        <Wallet className="w-3.5 h-3.5" />
+        Connect Wallet
       </Button>
     );
   }
 
   return (
-    <div className="relative font-mono">
-      <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 p-1">
-        {/* Balance badge */}
-        <div className="px-2 py-1 text-[11px] bg-zinc-950 border border-zinc-800/80 text-zinc-300 hidden sm:flex items-center gap-2">
-          <span className="text-emerald-400 font-semibold">${formatUsdc(usdcBalance)}</span>
-          <span className="text-zinc-400 text-[10px]">USDC</span>
-          <span className="text-zinc-600">/</span>
-          <span className="text-cyan-400">{solBalance} SOL</span>
+    <div className="relative font-mono text-xs">
+      <div className="flex items-center gap-1.5 bg-[#0d0d0f] border border-[#26262a] rounded-xl p-1 shadow-sm">
+        {/* Balances */}
+        <div className="px-2.5 py-1 bg-[#141416] rounded-lg text-neutral-300 hidden sm:flex items-center gap-2 text-[11px]">
+          <span className="text-violet-400 font-semibold">${formatUsdc(usdcBalance)}</span>
+          <span className="text-neutral-500 text-[10px]">USDC</span>
+          <span className="text-neutral-700">|</span>
+          <span className="text-neutral-300 font-medium">{solBalance} SOL</span>
         </div>
 
-        {/* Address and Role Button */}
+        {/* Address and Wallet pill */}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-2 px-2.5 py-1 text-xs text-zinc-100 hover:bg-zinc-800 transition-colors focus:outline-none"
+          className="flex items-center gap-2 px-2.5 py-1.5 text-neutral-200 hover:text-white hover:bg-[#141416] rounded-lg transition-colors focus:outline-none"
         >
-          <span className={`w-2 h-2 rounded-full ${role === 'sponsor' ? 'bg-cyan-400' : role === 'worker' ? 'bg-amber-400' : 'bg-purple-400'}`} />
-          <span className="font-semibold uppercase text-[11px]">{role}</span>
-          <span className="text-zinc-400 hidden md:inline">({truncateAddress(publicKeyString, 4)})</span>
-          <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="font-semibold text-[11px] text-white">
+            {truncateAddress(publicKeyString, 4)}
+          </span>
+          <ChevronDown className={`w-3.5 h-3.5 text-neutral-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
         </button>
       </div>
 
-      {/* Dropdown Menu */}
+      {/* Account Details Drawer / Popover */}
       {isOpen && (
         <div
-          className="absolute right-0 mt-1 w-72 bg-zinc-950 border border-zinc-800 shadow-2xl p-3 z-50 text-xs text-zinc-300 animate-in fade-in duration-150"
+          className="absolute right-0 mt-2 w-80 bg-[#0d0d0f] border border-[#26262a] rounded-2xl shadow-2xl p-4 z-50 text-neutral-300 animate-in fade-in duration-150 backdrop-blur-md"
           onMouseLeave={() => setIsOpen(false)}
         >
-          <div className="border-b border-zinc-800/80 pb-2 mb-2">
-            <span className="text-[10px] text-zinc-400 block uppercase">Connected Public Key</span>
-            <div className="flex items-center justify-between mt-1 bg-zinc-900 p-1.5 border border-zinc-800">
-              <span className="font-mono text-[11px] text-cyan-300 truncate max-w-[190px]">
+          {/* Header with Done Logo */}
+          <div className="flex items-center justify-between pb-3 border-b border-[#26262a]">
+            <div className="flex items-center gap-2">
+              <DoneLogo className="w-5 h-5" />
+              <div>
+                <span className="text-xs font-bold text-white block">{walletName}</span>
+                <span className="text-[10px] text-violet-400 font-medium">Solana Devnet</span>
+              </div>
+            </div>
+            <button
+              onClick={() => refreshBalances()}
+              className="p-1 text-neutral-400 hover:text-white rounded transition-colors"
+              title="Refresh on-chain balance"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* Connected Address Card */}
+          <div className="mt-3 p-2.5 bg-[#141416] rounded-xl border border-[#26262a]">
+            <span className="text-[10px] text-neutral-400 uppercase tracking-wider block mb-1">
+              Live Wallet Address
+            </span>
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-mono text-[11px] text-violet-300 truncate">
                 {publicKeyString}
               </span>
-              <button
-                onClick={handleCopy}
-                className="text-zinc-400 hover:text-zinc-200 p-1 transition-colors"
-                title="Copy Address"
-              >
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-              </button>
-            </div>
-          </div>
-
-          {/* Role Switching */}
-          <div className="py-1">
-            <span className="text-[10px] text-zinc-400 block uppercase mb-1.5">
-              Simulate Account Role:
-            </span>
-            <div className="grid grid-cols-1 gap-1">
-              {(['sponsor', 'worker', 'oracle'] as WalletRole[]).map((r) => (
+              <div className="flex items-center gap-1 shrink-0">
                 <button
-                  key={r}
-                  onClick={() => {
-                    switchRole(r);
-                    setIsOpen(false);
-                  }}
-                  className={`flex items-center justify-between px-2 py-1.5 text-left transition-colors border ${
-                    role === r
-                      ? 'bg-zinc-800/80 border-cyan-500/50 text-cyan-300 font-semibold'
-                      : 'border-transparent hover:bg-zinc-900 text-zinc-400 hover:text-zinc-200'
-                  }`}
+                  onClick={handleCopy}
+                  className="p-1 text-neutral-400 hover:text-white rounded hover:bg-[#1f1f23] transition-colors"
+                  title="Copy Address"
                 >
-                  <span className="flex items-center gap-1.5 text-xs">
-                    {r === 'sponsor' ? <Shield className="w-3 h-3 text-cyan-400" /> : <UserCheck className="w-3 h-3 text-amber-400" />}
-                    {roleLabels[r].name}
-                  </span>
-                  {role === r && <span className="text-[10px] text-cyan-400 font-mono">ACTIVE</span>}
+                  {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 </button>
-              ))}
+                <a
+                  href={getExplorerUrl(publicKeyString, 'address')}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-1 text-neutral-400 hover:text-white rounded hover:bg-[#1f1f23] transition-colors"
+                  title="View on Solana Explorer"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </div>
             </div>
           </div>
 
-          {/* Devnet Faucet */}
-          <div className="border-t border-zinc-800/80 pt-2.5 mt-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full justify-center text-xs py-1.5 border-cyan-900/50 hover:border-cyan-500 text-cyan-300"
-              onClick={handleFaucet}
+          {/* Quick Faucet Actions */}
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <button
+              onClick={handleFaucetUsdc}
+              className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-violet-600/10 hover:bg-violet-600/20 text-violet-300 border border-violet-500/30 transition-colors text-xs font-medium"
             >
-              <Droplets className="w-3.5 h-3.5 text-cyan-400 mr-1.5" />
-              {faucetSuccess ? 'Airdropped +5,000 USDC!' : 'Devnet Faucet (+5,000 USDC)'}
-            </Button>
-            <p className="text-[10px] text-zinc-400 text-center mt-1">
-              Mints SPL USDC tokens to connected Devnet keypair
-            </p>
+              <Droplets className="w-3.5 h-3.5" />
+              {faucetSuccess ? 'Claimed +$5k' : '+5,000 USDC'}
+            </button>
+
+            <button
+              onClick={handleAirdropSol}
+              disabled={isAirdropping}
+              className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-[#141416] hover:bg-[#1e1a29] text-neutral-200 border border-[#26262a] transition-colors text-xs font-medium"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-violet-400" />
+              {isAirdropping ? 'Airdropping...' : '+1.0 SOL'}
+            </button>
+          </div>
+
+          {/* Disconnect */}
+          <div className="mt-3 pt-3 border-t border-[#26262a] flex justify-end">
+            <button
+              onClick={() => {
+                disconnect();
+                setIsOpen(false);
+              }}
+              className="text-xs text-rose-400 hover:text-rose-300 transition-colors font-medium px-2 py-1"
+            >
+              Disconnect
+            </button>
           </div>
         </div>
       )}

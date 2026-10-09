@@ -1,676 +1,292 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { PublicKey } from '@solana/web3.js';
 import { VerificationType } from '@/types/protocol';
-import {
-  hashAgreementTerms,
-  hashDefinitionOfDone,
-  uint8ArrayToHex,
-} from '@/lib/protocol/hashing';
-import { parseUsdc, truncateAddress } from '@/lib/solana';
-import { protocolClient, DEMO_KEYS } from '@/lib/protocol/client';
+import { hashAgreementTerms, hashDoDCriteria } from '@/lib/protocol/hashing';
+import { formatUsdc } from '@/lib/solana';
+import { protocolClient } from '@/lib/protocol/client';
 import { useWallet } from '@/components/web3/WalletContext';
 import { useTransactionExecution } from '@/hooks/useTransactionExecution';
 import { TxStateModal } from '@/components/web3/TxStateModal';
 import { Button } from '@/components/ui/Button';
-import { Input, Textarea } from '@/components/ui/Input';
+import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
+import { DoneLogo } from '@/components/protocol/DoneLogo';
 import {
-  PlusCircle,
-  Trash2,
   ShieldCheck,
-  Hash,
   ArrowRight,
-  Sparkles,
-  User,
   Plus,
+  Trash2,
+  Lock,
+  ArrowLeft,
 } from 'lucide-react';
+import Link from 'next/link';
 
-interface MilestoneDraft {
-  title: string;
-  description: string;
-  amountUsdcString: string;
-  verificationType: VerificationType;
-  criteria: string[];
-  computedDodHash: string;
-}
-
-// Quick interactive templates
-const PRESETS = [
-  {
-    id: 'audit',
-    label: '🛡️ Contract Audit',
-    title: 'Rust Anchor Smart Contract Audit',
-    description: 'Security review and invariant fuzzing of protocol escrow vaults.',
-    termsText: '1. Definition of Done must strictly match on-chain criteria.\n2. Work artifacts hosted on Arweave.\n3. Disbursals are final upon block confirmation.',
-    worker: DEMO_KEYS.WORKER,
-    milestones: [
-      {
-        title: 'Static Analysis & Threat Model',
-        description: 'Comprehensive CPI call-path review and cargo-audit pass.',
-        amountUsdcString: '4000',
-        verificationType: VerificationType.SPONSOR,
-        criteria: [
-          'Architecture threat model covering CPI paths',
-          'Zero unaddressed high-risk cargo audit alerts',
-        ],
-        computedDodHash: '',
-      },
-      {
-        title: 'Trident Invariant Fuzzing',
-        description: 'Fuzz test suite verifying escrow solvency under fault conditions.',
-        amountUsdcString: '6000',
-        verificationType: VerificationType.SPONSOR,
-        criteria: [
-          'Trident fuzz run for 10M+ iterations',
-          'PR merged to core test repository',
-        ],
-        computedDodHash: '',
-      },
-    ],
-  },
-  {
-    id: 'frontend',
-    label: '⚡ Next.js UI Delivery',
-    title: 'Done Protocol Next.js Web App',
-    description: 'Production web app with pitch-black UI, flyout drawers, and wallet bindings.',
-    termsText: '1. Meets zero modal invariant (drawers only).\n2. TypeScript strictly typed.\n3. All Anchor instructions tested on Devnet.',
-    worker: DEMO_KEYS.WORKER,
-    milestones: [
-      {
-        title: 'Shell, Wallet & Agreements Feed',
-        description: 'App shell, responsive navigation, and live agreements overview.',
-        amountUsdcString: '3500',
-        verificationType: VerificationType.SPONSOR,
-        criteria: [
-          'AppShell with desktop left-nav & mobile dock',
-          'Live Solana Devnet RPC hook integration',
-        ],
-        computedDodHash: '',
-      },
-      {
-        title: 'Contextual Drawers & Settlement',
-        description: 'Evidence submission, DoD verification audit, and escrow disbursals.',
-        amountUsdcString: '4500',
-        verificationType: VerificationType.SPONSOR,
-        criteria: [
-          'SlideDrawer with right flyout & mobile sheet',
-          'One-click verification and settlement flow',
-        ],
-        computedDodHash: '',
-      },
-    ],
-  },
-  {
-    id: 'bot',
-    label: '🤖 Oracle Verification Bot',
-    title: 'Automated GitHub CI/CD Oracle',
-    description: 'Event-driven Oracle verifying PR merges and committing proofs to Devnet.',
-    termsText: '1. Cryptographic proof signatures verified on-chain.\n2. 99.9% uptime SLA.',
-    worker: DEMO_KEYS.ORACLE,
-    milestones: [
-      {
-        title: 'GitHub Webhook Ingestion Engine',
-        description: 'Serverless parser verifying SHA commit signatures against DoD.',
-        amountUsdcString: '3000',
-        verificationType: VerificationType.ON_CHAIN_ORACLE,
-        criteria: [
-          'Webhook listener validating GitHub HMAC signature',
-          'Automated proof generation to Solana Devnet',
-        ],
-        computedDodHash: '',
-      },
-      {
-        title: 'Attestation & Auto-Disburse Pipe',
-        description: 'Autonomous trigger calling verify_milestone instruction.',
-        amountUsdcString: '5000',
-        verificationType: VerificationType.ON_CHAIN_ORACLE,
-        criteria: [
-          'Multi-signature oracle consensus rule',
-          'End-to-end automated settlement verified',
-        ],
-        computedDodHash: '',
-      },
-    ],
-  },
-  {
-    id: 'bounty',
-    label: '🎯 Rapid Bug Bounty',
-    title: 'Escrow Math Overflow Investigation',
-    description: 'Targeted research into token balance precision and edge cases.',
-    termsText: '1. PoC exploit delivered with unit test.\n2. Non-disclosure until patched.',
-    worker: DEMO_KEYS.WORKER,
-    milestones: [
-      {
-        title: 'PoC Exploit Demonstration',
-        description: 'Reproducible Anchor test showcasing the edge-case behavior.',
-        amountUsdcString: '2500',
-        verificationType: VerificationType.SPONSOR,
-        criteria: [
-          'Self-contained reproduction script with Anchor test',
-          'Detailed remediation recommendation',
-        ],
-        computedDodHash: '',
-      },
-    ],
-  },
-];
-
-export default function NewAgreementPage() {
+export default function CreateAgreementPage() {
   const router = useRouter();
-  const { publicKeyString } = useWallet();
-  const { txState, execute, reset, isOpen } = useTransactionExecution();
+  const { publicKey, publicKeyString } = useWallet();
+  const { txState, execute, reset: resetTx, isOpen: isTxOpen } = useTransactionExecution();
 
-  // Form State
-  const [workerPubkey, setWorkerPubkey] = useState(DEMO_KEYS.WORKER);
-  const [title, setTitle] = useState('Rust Anchor Smart Contract Audit');
-  const [description, setDescription] = useState(
-    'Comprehensive security review and invariant testing of protocol escrow vaults.'
-  );
-  const [termsText, setTermsText] = useState(
-    '1. Milestones strictly satisfy committed Definition of Done.\n2. Work artifacts permanently hosted on Arweave/IPFS.\n3. Disbursals are final upon block confirmation.'
-  );
-  const [computedTermsHash, setComputedTermsHash] = useState('');
+  const [title, setTitle] = useState('Protocol Milestone Agreement');
+  const [workerAddress, setWorkerAddress] = useState('');
+  const [termsText, setTermsText] = useState('Standard milestone deliverables under DONE Protocol.');
+  const [milestones, setMilestones] = useState([
+    { title: 'Milestone 1: Deliverable Build', amount: 2500, dod: ['Verified test suite', 'PR merged'] },
+    { title: 'Milestone 2: Production Release', amount: 2500, dod: ['Live deployment', 'Sign-off'] },
+  ]);
+  const [step, setStep] = useState<1 | 2>(1);
+  const [error, setError] = useState<string | null>(null);
 
-  // Milestones State
-  const [milestones, setMilestones] = useState<MilestoneDraft[]>(PRESETS[0].milestones);
+  const totalAmount = milestones.reduce((sum, m) => sum + m.amount, 0);
 
-  // Apply Preset
-  const applyPreset = (presetId: string) => {
-    const p = PRESETS.find((x) => x.id === presetId);
-    if (!p) return;
-    setTitle(p.title);
-    setDescription(p.description);
-    setTermsText(p.termsText);
-    setWorkerPubkey(p.worker);
-    setMilestones(p.milestones.map((m) => ({ ...m })));
-  };
-
-  // Compute Terms Hash
-  useEffect(() => {
-    let active = true;
-    const compute = async () => {
-      const buffer = await hashAgreementTerms({ title, description, termsText });
-      if (active) setComputedTermsHash(uint8ArrayToHex(buffer));
-    };
-    compute();
-    return () => {
-      active = false;
-    };
-  }, [title, description, termsText]);
-
-  // Compute DoD Hashes
-  const criteriaSignature = JSON.stringify(milestones.map((m) => m.criteria));
-  useEffect(() => {
-    let active = true;
-    const computeAll = async () => {
-      const parsed = JSON.parse(criteriaSignature) as string[][];
-      const hashes = await Promise.all(
-        parsed.map(async (crits) => {
-          const buffer = await hashDefinitionOfDone(crits.filter(Boolean));
-          return uint8ArrayToHex(buffer);
-        })
-      );
-      if (active) {
-        setMilestones((prev) =>
-          prev.map((m, idx) => ({
-            ...m,
-            computedDodHash: hashes[idx] || '',
-          }))
-        );
-      }
-    };
-    computeAll();
-    return () => {
-      active = false;
-    };
-  }, [criteriaSignature]);
-
-  const addMilestone = () => {
-    setMilestones([
-      ...milestones,
-      {
-        title: `Milestone ${milestones.length + 1}: Deliverable`,
-        description: 'Deliverable specification...',
-        amountUsdcString: '2500',
-        verificationType: VerificationType.SPONSOR,
-        criteria: ['Verifiable output artifact committed', 'Test verification passed'],
-        computedDodHash: '',
-      },
-    ]);
-  };
-
-  const removeMilestone = (index: number) => {
-    if (milestones.length <= 1) return;
-    setMilestones(milestones.filter((_, i) => i !== index));
-  };
-
-  const updateMilestone = (index: number, patch: Partial<MilestoneDraft>) => {
-    const next = [...milestones];
-    next[index] = { ...next[index], ...patch };
-    setMilestones(next);
-  };
-
-  const adjustMilestoneAmount = (mIdx: number, delta: number) => {
-    const current = parseFloat(milestones[mIdx].amountUsdcString) || 0;
-    const updated = Math.max(100, current + delta);
-    updateMilestone(mIdx, { amountUsdcString: updated.toString() });
-  };
-
-  const addCriterion = (mIdx: number, defaultText: string = '') => {
-    const next = [...milestones];
-    next[mIdx].criteria.push(defaultText);
-    setMilestones(next);
-  };
-
-  const updateCriterion = (mIdx: number, cIdx: number, val: string) => {
-    const next = [...milestones];
-    next[mIdx].criteria[cIdx] = val;
-    setMilestones(next);
-  };
-
-  const removeCriterion = (mIdx: number, cIdx: number) => {
-    const next = [...milestones];
-    next[mIdx].criteria = next[mIdx].criteria.filter((_, i) => i !== cIdx);
-    setMilestones(next);
-  };
-
-  const totalBudgetUsdc = milestones.reduce(
-    (sum, m) => sum + (parseFloat(m.amountUsdcString) || 0),
-    0
-  );
-
-  const handleCreateAgreement = async () => {
-    try {
-      new PublicKey(workerPubkey);
-    } catch {
-      alert('Invalid Solana Worker Public Key');
+  const handleSubmit = async () => {
+    setError(null);
+    if (!title.trim()) {
+      setError('Title is required');
       return;
     }
 
-    const termsBuffer = await hashAgreementTerms({ title, description, termsText });
+    let workerPubkey: PublicKey;
+    try {
+      if (workerAddress.trim()) {
+        workerPubkey = new PublicKey(workerAddress.trim());
+      } else if (publicKey) {
+        workerPubkey = publicKey;
+      } else {
+        workerPubkey = new PublicKey('11111111111111111111111111111111');
+      }
+    } catch {
+      setError('Invalid Worker Solana address');
+      return;
+    }
 
-    const result = await execute(
-      'createAgreement',
-      `Init Agreement with worker ${truncateAddress(workerPubkey, 4)} & ${milestones.length} milestones`,
-      async () => {
-        const agRes = await protocolClient.createAgreement({
-          worker: new PublicKey(workerPubkey),
-          termsHash: termsBuffer,
+    try {
+      await execute('createAgreement', 'Deploy Escrow and Derive Vault PDA', async () => {
+        const termsHash = await hashAgreementTerms(termsText);
+        const { signature, agreementPda } = await protocolClient.createAgreement({
+          sponsor: publicKey || undefined,
+          worker: workerPubkey,
+          termsHash,
           milestoneCount: milestones.length,
           title,
-          description,
+          description: termsText,
           termsText,
         });
 
         for (let i = 0; i < milestones.length; i++) {
           const m = milestones[i];
-          const dodBuffer = await hashDefinitionOfDone(m.criteria.filter(Boolean));
-          const rawAmount = parseUsdc(m.amountUsdcString);
-
+          const dodHash = await hashDoDCriteria(m.dod);
           await protocolClient.createMilestone({
-            agreement: agRes.agreementPda,
+            agreement: agreementPda,
             index: i,
-            amount: rawAmount,
-            dodHash: dodBuffer,
-            verificationType: m.verificationType,
+            amount: Math.round(m.amount * 1e6),
+            dodHash,
+            verificationType: VerificationType.SPONSOR,
             title: m.title,
-            description: m.description,
-            dodCriteria: m.criteria.filter(Boolean),
+            description: m.title,
+            dodCriteria: m.dod,
           });
         }
 
-        return agRes;
-      }
-    );
-
-    if (result) {
-      setTimeout(() => {
-        router.push(`/agreements/${result.agreementPda.toBase58()}`);
-      }, 800);
+        router.push(`/agreements/${agreementPda.toBase58()}`);
+        return { signature, agreementPda };
+      });
+    } catch (err) {
+      console.error(err);
+      setError((err as Error).message);
     }
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-5 font-mono text-neutral-100">
-      <TxStateModal state={txState} isOpen={isOpen} onClose={reset} />
+    <div className="max-w-2xl mx-auto space-y-6 font-mono text-neutral-100">
+      <TxStateModal
+        isOpen={isTxOpen}
+        state={txState}
+        onClose={resetTx}
+      />
 
-      {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#26262a] pb-3">
-        <div>
-          <div className="flex items-center gap-2 text-xs text-violet-400 mb-0.5">
-            <ShieldCheck className="w-4 h-4" />
-            <span className="font-bold tracking-wider">NEW AGREEMENT WIZARD</span>
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-[#26262a] pb-4">
+        <div className="flex items-center gap-3">
+          <DoneLogo className="w-8 h-8" />
+          <div>
+            <h1 className="text-xl font-bold text-white">Create Escrow Agreement</h1>
+            <p className="text-xs text-neutral-400">Step {step} of 2</p>
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-white">Create Agreement</h1>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button variant="secondary" size="sm" onClick={() => router.push('/agreements')}>
-            Cancel
-          </Button>
-          <Button variant="primary" size="sm" onClick={handleCreateAgreement}>
-            <span>Initialize & Fund</span>
-            <ArrowRight className="w-4 h-4 ml-1.5" />
-          </Button>
-        </div>
+        <Link
+          href="/"
+          className="text-xs text-neutral-400 hover:text-white flex items-center gap-1"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" /> Cancel
+        </Link>
       </div>
 
-      {/* 1-Click Template Buttons */}
-      <div className="bg-[#0d0d0f] border border-[#26262a] p-3 rounded-2xl space-y-2">
-        <div className="flex items-center gap-2 text-xs text-neutral-400">
-          <Sparkles className="w-3.5 h-3.5 text-violet-400" />
-          <span className="font-semibold text-neutral-200 uppercase text-[11px]">Quick Templates:</span>
+      {error && (
+        <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-300 text-xs">
+          {error}
         </div>
-        <div className="flex flex-wrap gap-2">
-          {PRESETS.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => applyPreset(p.id)}
-              className="px-3 py-1.5 rounded-xl bg-[#141416] hover:bg-[#1f1b2e] border border-[#26262a] hover:border-violet-500/40 text-xs text-neutral-200 hover:text-white transition-all active:scale-95"
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
-      </div>
+      )}
 
-      {/* Sponsor Step Card */}
-      <Card className="space-y-4">
-        <div className="flex items-center justify-between border-b border-[#26262a] pb-3">
-          <div className="flex items-center gap-2">
-            <span className="w-6 h-6 rounded-lg bg-violet-600/20 text-violet-300 border border-violet-500/30 flex items-center justify-center text-xs font-bold">
-              1
-            </span>
-            <h3 className="text-xs font-bold text-white uppercase tracking-wider">
-              Agreement Parameters
-            </h3>
-          </div>
-          {computedTermsHash && (
-            <span className="text-[10px] text-violet-400 bg-violet-950/40 border border-violet-800/40 px-2 py-0.5 rounded-lg truncate max-w-[200px]">
-              SHA-256: {computedTermsHash.slice(0, 12)}...
-            </span>
-          )}
-        </div>
-
-        {/* Worker Address with Quick Buttons */}
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-medium text-neutral-300 uppercase tracking-wide">
-              Worker Solana Address
+      {step === 1 ? (
+        <Card className="space-y-5">
+          {/* Title */}
+          <div>
+            <label className="text-xs font-semibold text-neutral-300 block mb-1.5 uppercase">
+              Agreement Title
             </label>
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => setWorkerPubkey(DEMO_KEYS.WORKER)}
-                className="text-[10px] px-2 py-0.5 rounded-lg bg-[#141416] hover:bg-[#1e1a29] border border-[#26262a] text-neutral-300 hover:text-violet-300"
-              >
-                Demo Worker
-              </button>
-              <button
-                type="button"
-                onClick={() => setWorkerPubkey(DEMO_KEYS.ORACLE)}
-                className="text-[10px] px-2 py-0.5 rounded-lg bg-[#141416] hover:bg-[#1e1a29] border border-[#26262a] text-neutral-300 hover:text-violet-300"
-              >
-                Oracle Bot
-              </button>
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g. Audit Assessment"
+            />
+          </div>
+
+          {/* Worker */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-semibold text-neutral-300 uppercase">
+                Worker Solana Address
+              </label>
               {publicKeyString && (
                 <button
                   type="button"
-                  onClick={() => setWorkerPubkey(publicKeyString)}
-                  className="text-[10px] px-2 py-0.5 rounded-lg bg-[#141416] hover:bg-[#1e1a29] border border-[#26262a] text-neutral-300 hover:text-violet-300"
+                  onClick={() => setWorkerAddress(publicKeyString)}
+                  className="text-[11px] text-violet-400 hover:underline"
                 >
-                  My Wallet
+                  Use my address
                 </button>
               )}
             </div>
-          </div>
-          <Input
-            value={workerPubkey}
-            onChange={(e) => setWorkerPubkey(e.target.value)}
-            placeholder="Base58 Solana Address..."
-            required
-          />
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div className="sm:col-span-2">
             <Input
-              label="AGREEMENT TITLE"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
+              value={workerAddress}
+              onChange={(e) => setWorkerAddress(e.target.value)}
+              placeholder={publicKeyString || 'Base58 Solana PublicKey'}
+              className="font-mono text-xs"
             />
           </div>
-          <div className="sm:col-span-2">
-            <Textarea
-              label="SCOPE & OBJECTIVES"
-              rows={2}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              required
-            />
-          </div>
-        </div>
-      </Card>
 
-      {/* Milestone Builder Section */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="w-6 h-6 rounded-lg bg-violet-600/20 text-violet-300 border border-violet-500/30 flex items-center justify-center text-xs font-bold">
-              2
-            </span>
-            <h3 className="text-xs font-bold text-white uppercase tracking-wider">
-              Milestones ({milestones.length})
-            </h3>
-          </div>
-          <Button variant="secondary" size="sm" onClick={addMilestone}>
-            <PlusCircle className="w-3.5 h-3.5 mr-1 text-violet-400" />
-            Add Milestone
-          </Button>
-        </div>
-
-        {milestones.map((m, mIdx) => (
-          <div
-            key={mIdx}
-            className="p-4 sm:p-5 bg-[#0d0d0f] border border-[#26262a] rounded-2xl space-y-3.5 hover:border-[#323238] transition-colors"
-          >
-            {/* Milestone Header */}
-            <div className="flex items-center justify-between border-b border-[#26262a] pb-2.5">
-              <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 rounded-lg bg-[#141416] border border-violet-500/30 text-xs font-bold text-violet-300">
-                  #{mIdx + 1}
-                </span>
-                <span className="text-xs font-bold text-white truncate max-w-sm">{m.title}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                {m.computedDodHash && (
-                  <span className="text-[10px] text-neutral-400 font-mono hidden sm:inline">
-                    DoD: {m.computedDodHash.slice(0, 10)}...
-                  </span>
-                )}
-                {milestones.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeMilestone(mIdx)}
-                    className="text-neutral-500 hover:text-red-400 text-xs p-1"
-                    title="Delete milestone"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
+          {/* Milestones */}
+          <div className="space-y-3 pt-2 border-t border-[#26262a]">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase text-neutral-300">
+                Milestones ({milestones.length})
+              </span>
+              {milestones.length < 4 && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setMilestones([
+                      ...milestones,
+                      { title: `Milestone ${milestones.length + 1}`, amount: 1000, dod: ['Deliverable approval'] },
+                    ])
+                  }
+                  className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1"
+                >
+                  <Plus className="w-3 h-3" /> Add Milestone
+                </button>
+              )}
             </div>
 
-            {/* Title & Amount with Increment Buttons */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="sm:col-span-2">
-                <Input
-                  label="MILESTONE TITLE"
-                  value={m.title}
-                  onChange={(e) => updateMilestone(mIdx, { title: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-medium text-neutral-300 uppercase tracking-wide">
-                    Amount (USDC)
-                  </label>
-                  <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={() => adjustMilestoneAmount(mIdx, 500)}
-                      className="text-[10px] px-1.5 py-0.5 rounded bg-[#141416] hover:bg-violet-900/40 text-violet-300 border border-[#26262a]"
-                    >
-                      +500
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => adjustMilestoneAmount(mIdx, 1000)}
-                      className="text-[10px] px-1.5 py-0.5 rounded bg-[#141416] hover:bg-violet-900/40 text-violet-300 border border-[#26262a]"
-                    >
-                      +1K
-                    </button>
-                  </div>
-                </div>
-                <Input
-                  type="number"
-                  min="1"
-                  step="1"
-                  value={m.amountUsdcString}
-                  onChange={(e) => updateMilestone(mIdx, { amountUsdcString: e.target.value })}
-                  required
-                />
-              </div>
-            </div>
-
-            {/* Verification Mode Selector: Button Segment */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-neutral-300 uppercase tracking-wide">
-                Verification Method
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  { type: VerificationType.SPONSOR, label: '👤 Sponsor Sign-off' },
-                  { type: VerificationType.ON_CHAIN_ORACLE, label: '⚡ Oracle / Bot' },
-                  { type: VerificationType.ATTESTATION, label: '📜 Attestation' },
-                ].map((mode) => {
-                  const isActive = m.verificationType === mode.type;
-                  return (
-                    <button
-                      key={mode.type}
-                      type="button"
-                      onClick={() => updateMilestone(mIdx, { verificationType: mode.type })}
-                      className={`py-2 px-2.5 rounded-xl text-xs font-medium transition-all ${
-                        isActive
-                          ? 'bg-violet-600/25 border border-violet-500 text-white font-bold shadow-sm'
-                          : 'bg-[#141416] border border-[#202024] text-neutral-400 hover:text-white hover:border-[#26262a]'
-                      }`}
-                    >
-                      {mode.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Definition of Done Checklist with Quick Condition Adders */}
-            <div className="space-y-2 pt-2 border-t border-[#26262a]">
-              <div className="flex flex-wrap justify-between items-center gap-2">
-                <label className="text-xs font-semibold text-neutral-300 uppercase tracking-wide">
-                  Definition of Done Criteria ({m.criteria.length})
-                </label>
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <button
-                    type="button"
-                    onClick={() => addCriterion(mIdx, 'Pull request merged into target repo')}
-                    className="text-[10px] px-2 py-0.5 rounded-lg bg-[#141416] hover:bg-violet-900/30 text-neutral-300 hover:text-violet-300 border border-[#26262a]"
-                  >
-                    + PR Merged
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => addCriterion(mIdx, '100% tests pass with zero regression')}
-                    className="text-[10px] px-2 py-0.5 rounded-lg bg-[#141416] hover:bg-violet-900/30 text-neutral-300 hover:text-violet-300 border border-[#26262a]"
-                  >
-                    + Tests Pass
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => addCriterion(mIdx)}
-                    className="text-[10px] px-2 py-0.5 rounded-lg bg-violet-600/20 text-violet-300 border border-violet-500/30 hover:bg-violet-600/30 inline-flex items-center gap-1 font-bold"
-                  >
-                    <Plus className="w-3 h-3" /> Custom
-                  </button>
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                {m.criteria.map((crit, cIdx) => (
-                  <div key={cIdx} className="flex gap-2 items-center">
-                    <span className="text-[11px] font-bold text-violet-400 w-5">
-                      #{cIdx + 1}
-                    </span>
-                    <Input
-                      value={crit}
-                      onChange={(e) => updateCriterion(mIdx, cIdx, e.target.value)}
-                      placeholder="Verifiable completion condition..."
+            <div className="space-y-2">
+              {milestones.map((m, idx) => (
+                <div key={idx} className="p-3 bg-[#141416] border border-[#26262a] rounded-xl space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-bold text-violet-400">#{idx + 1}</span>
+                    <input
+                      type="text"
+                      value={m.title}
+                      onChange={(e) => {
+                        const updated = [...milestones];
+                        updated[idx].title = e.target.value;
+                        setMilestones(updated);
+                      }}
+                      className="flex-1 bg-transparent border-b border-[#26262a] focus:border-violet-500 text-xs text-white pb-0.5 outline-none"
                     />
-                    {m.criteria.length > 1 && (
+                    <div className="flex items-center gap-1 text-xs">
+                      <span className="text-neutral-500">$</span>
+                      <input
+                        type="number"
+                        value={m.amount}
+                        onChange={(e) => {
+                          const updated = [...milestones];
+                          updated[idx].amount = parseFloat(e.target.value) || 0;
+                          setMilestones(updated);
+                        }}
+                        className="w-16 bg-[#0d0d0f] border border-[#26262a] rounded px-1.5 py-0.5 text-right font-semibold text-white text-xs outline-none"
+                      />
+                      <span className="text-neutral-500 text-[10px]">USDC</span>
+                    </div>
+                    {milestones.length > 1 && (
                       <button
                         type="button"
-                        onClick={() => removeCriterion(mIdx, cIdx)}
-                        className="p-2 text-neutral-500 hover:text-red-400"
+                        onClick={() => setMilestones(milestones.filter((_, i) => i !== idx))}
+                        className="text-neutral-500 hover:text-rose-400 p-1"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     )}
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-between items-center p-3 rounded-xl bg-violet-950/20 border border-violet-500/30 text-xs">
+              <span className="text-neutral-300">Total Escrow Budget:</span>
+              <span className="text-sm font-bold text-violet-300">${formatUsdc(totalAmount * 1e6)} USDC</span>
             </div>
           </div>
-        ))}
-      </div>
 
-      {/* Action Bar */}
-      <div className="p-4 sm:p-5 bg-[#0d0d0f] border border-[#26262a] rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div>
-          <span className="text-neutral-400 text-xs uppercase block font-semibold">Total Escrow</span>
-          <div className="text-2xl font-bold text-white">
-            ${totalBudgetUsdc.toLocaleString()} <span className="text-xs text-neutral-400">USDC</span>
+          <div className="pt-2 flex justify-end">
+            <Button variant="primary" onClick={() => setStep(2)} className="flex items-center gap-2">
+              Review Escrow <ArrowRight className="w-4 h-4" />
+            </Button>
           </div>
-          <span className="text-[11px] text-violet-400">
-            {milestones.length} Milestones ready to deploy on Devnet
-          </span>
-        </div>
+        </Card>
+      ) : (
+        /* Step 2: Confirm */
+        <Card className="space-y-5 text-xs">
+          <div className="flex flex-col items-center justify-center p-6 rounded-2xl bg-[#141416] border border-[#26262a] text-center space-y-2">
+            <DoneLogo className="w-12 h-12" />
+            <h3 className="text-base font-bold text-white">{title}</h3>
+            <div className="text-2xl font-black text-violet-400">${formatUsdc(totalAmount * 1e6)} USDC</div>
+            <span className="text-[10px] text-neutral-400 uppercase tracking-widest">{milestones.length} Milestones</span>
+          </div>
 
-        <div className="flex items-center gap-2.5 w-full sm:w-auto">
-          <Button
-            variant="secondary"
-            size="md"
-            onClick={() => router.push('/agreements')}
-            className="flex-1 sm:flex-none"
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="primary"
-            size="md"
-            onClick={handleCreateAgreement}
-            className="flex-1 sm:flex-none"
-          >
-            <span>Initialize & Fund Escrow</span>
-            <ArrowRight className="w-4 h-4 ml-1.5" />
-          </Button>
-        </div>
-      </div>
+          <div className="space-y-2">
+            <div className="flex justify-between p-3 rounded-xl bg-[#141416] border border-[#26262a]">
+              <span className="text-neutral-400">Sponsor:</span>
+              <span className="text-violet-300 font-mono text-[11px]">
+                {publicKeyString ? `${publicKeyString.slice(0, 10)}...` : 'Connected Wallet'}
+              </span>
+            </div>
+            <div className="flex justify-between p-3 rounded-xl bg-[#141416] border border-[#26262a]">
+              <span className="text-neutral-400">Worker:</span>
+              <span className="text-violet-300 font-mono text-[11px]">
+                {workerAddress ? `${workerAddress.slice(0, 10)}...` : 'Active Wallet'}
+              </span>
+            </div>
+            <div className="flex justify-between p-3 rounded-xl bg-[#141416] border border-[#26262a]">
+              <span className="text-neutral-400">Security:</span>
+              <span className="text-emerald-400 font-semibold flex items-center gap-1">
+                <Lock className="w-3.5 h-3.5" /> Non-Custodial Vault PDA
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between pt-3 border-t border-[#26262a]">
+            <Button variant="outline" onClick={() => setStep(1)}>
+              Back
+            </Button>
+            <Button variant="primary" onClick={handleSubmit} className="flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4" /> Authorize & Deploy Escrow
+            </Button>
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

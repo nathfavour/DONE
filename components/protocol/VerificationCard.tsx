@@ -116,7 +116,7 @@ export function VerificationCard({
                   href={getExplorerUrl(milestone.settlementTx, 'tx')}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-cyan-400 hover:text-cyan-300 font-mono inline-flex items-center gap-1 underline text-[11px]"
+                  className="text-violet-400 hover:text-violet-300 font-mono inline-flex items-center gap-1 underline text-[11px]"
                 >
                   {truncateAddress(milestone.settlementTx, 10)}
                   <ExternalLink className="w-3 h-3" />
@@ -228,7 +228,7 @@ export function VerificationCard({
                   });
                   setCheckedCriteria(all);
                 }}
-                className="text-[10px] text-cyan-300 bg-[#141416] px-2.5 py-1 rounded-lg border border-[#26262a]"
+                className="text-[10px] text-violet-300 bg-[#141416] px-2.5 py-1 rounded-lg border border-violet-500/30"
               >
                 ⚡ Check All Criteria
               </button>
@@ -305,7 +305,7 @@ export function VerificationCard({
       <CardContent>
         <p className="text-xs text-neutral-400 leading-relaxed">
           The Definition of Done has been committed on-chain with hash{' '}
-          <span className="text-cyan-400 font-mono">{truncateAddress(milestone.dodHash, 8)}</span>.
+          <span className="text-violet-400 font-mono">{truncateAddress(milestone.dodHash, 8)}</span>.
           Work is currently in flight. Once the worker submits proof artifacts, the verification audit step will unlock.
         </p>
       </CardContent>

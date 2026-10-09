@@ -2,6 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
+import { DoneLogo } from '../protocol/DoneLogo';
 
 interface SlideDrawerProps {
   isOpen: boolean;
@@ -18,7 +19,7 @@ export function SlideDrawer({
   title,
   subtitle,
   children,
-  width = 'w-[440px]',
+  width = 'w-[460px]',
 }: SlideDrawerProps) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -36,18 +37,21 @@ export function SlideDrawer({
     <div className="fixed inset-0 z-50 overflow-hidden font-mono text-neutral-100">
       {/* Semi-transparent dark backdrop */}
       <div
-        className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-black/75 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
 
-      {/* Desktop: Right Sidebar (fixed top-0 right-0 h-full w-[440px] bg-[#0d0d0f]) */}
+      {/* Desktop: Right Sidebar */}
       <aside
-        className={`hidden md:flex flex-col fixed top-0 right-0 h-full ${width} max-w-full bg-[#0d0d0f] border-l border-[#26262a] p-6 z-50 overflow-y-auto shadow-2xl transition-transform duration-300 animate-in slide-in-from-right`}
+        className={`hidden md:flex flex-col fixed top-0 right-0 h-full ${width} max-w-full bg-[#0a0a0c] border-l border-[#26262a] p-6 z-50 overflow-y-auto shadow-2xl transition-transform duration-300 animate-in slide-in-from-right`}
       >
         <div className="flex items-start justify-between pb-4 border-b border-[#26262a]">
-          <div>
-            <div className="text-sm font-semibold text-neutral-100">{title}</div>
-            {subtitle && <p className="text-xs text-neutral-400 mt-0.5">{subtitle}</p>}
+          <div className="flex items-center gap-3">
+            <DoneLogo className="w-6 h-6" />
+            <div>
+              <div className="text-sm font-bold text-white">{title}</div>
+              {subtitle && <p className="text-xs text-neutral-400 mt-0.5">{subtitle}</p>}
+            </div>
           </div>
           <button
             onClick={onClose}
@@ -59,15 +63,18 @@ export function SlideDrawer({
         <div className="py-4 flex-1">{children}</div>
       </aside>
 
-      {/* Mobile: Bottom Drawer (fixed inset-x-0 bottom-0 rounded-t-3xl bg-[#0d0d0f] max-h-[85vh]) */}
-      <div className="md:hidden fixed inset-x-0 bottom-0 bg-[#0d0d0f] border-t border-[#26262a] rounded-t-3xl p-6 z-50 max-h-[85vh] overflow-y-auto shadow-2xl transition-transform duration-300 animate-in slide-in-from-bottom">
+      {/* Mobile: Bottom Drawer */}
+      <div className="md:hidden fixed inset-x-0 bottom-0 bg-[#0a0a0c] border-t border-[#26262a] rounded-t-3xl p-6 z-50 max-h-[88vh] overflow-y-auto shadow-2xl transition-transform duration-300 animate-in slide-in-from-bottom">
         {/* Drag handle */}
         <div className="w-12 h-1.5 bg-[#26262a] rounded-full mx-auto mb-4" />
 
         <div className="flex items-start justify-between pb-4 border-b border-[#26262a]">
-          <div>
-            <div className="text-sm font-semibold text-neutral-100">{title}</div>
-            {subtitle && <p className="text-xs text-neutral-400 mt-0.5">{subtitle}</p>}
+          <div className="flex items-center gap-3">
+            <DoneLogo className="w-6 h-6" />
+            <div>
+              <div className="text-sm font-bold text-white">{title}</div>
+              {subtitle && <p className="text-xs text-neutral-400 mt-0.5">{subtitle}</p>}
+            </div>
           </div>
           <button
             onClick={onClose}

@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { TxStateModal } from '@/components/web3/TxStateModal';
 import { QuickActionModal, QuickActionType } from '@/components/protocol/QuickActionModal';
+import { DoneLogo } from '@/components/protocol/DoneLogo';
 import {
   ChevronLeft,
   Lock,
@@ -31,7 +32,7 @@ export default function AgreementDetailPage() {
   const id = params?.id as string;
 
   const { data: agreement, isLoading } = useAgreement(id);
-  const { publicKeyString, role, switchRole } = useWallet();
+  const { publicKeyString } = useWallet();
   const { txState, execute, reset: resetTx, isOpen: isTxOpen } = useTransactionExecution();
 
   // Contextual inspection panel state
@@ -142,17 +143,20 @@ export default function AgreementDetailPage() {
         )}
       </div>
 
-      {/* 3.4 Agreement Summary Header */}
+      {/* Agreement Summary Header */}
       <Card className="space-y-5">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="space-y-1.5 flex-1">
-            <div className="flex flex-wrap items-center gap-2.5">
-              <h1 className="text-xl sm:text-2xl font-bold text-white">{agreement.title}</h1>
-              <AgreementStateBadge state={agreement.state} />
+          <div className="flex items-start gap-3.5 flex-1">
+            <DoneLogo className="w-9 h-9 shrink-0 mt-1" />
+            <div className="space-y-1.5">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <h1 className="text-xl sm:text-2xl font-bold text-white">{agreement.title}</h1>
+                <AgreementStateBadge state={agreement.state} />
+              </div>
+              <p className="text-xs sm:text-sm text-neutral-400 max-w-3xl leading-relaxed">
+                {agreement.description}
+              </p>
             </div>
-            <p className="text-xs sm:text-sm text-neutral-400 max-w-3xl leading-relaxed">
-              {agreement.description}
-            </p>
           </div>
 
           <div className="flex flex-col sm:flex-row lg:flex-col items-start lg:items-end justify-between gap-3 border-t lg:border-t-0 pt-4 lg:pt-0 border-[#26262a]">

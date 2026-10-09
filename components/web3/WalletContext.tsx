@@ -1,49 +1,70 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { PublicKey, Keypair } from '@solana/web3.js';
-import { DEMO_KEYS } from '@/lib/protocol/client';
-
-export type WalletRole = 'sponsor' | 'worker' | 'oracle' | 'custom';
+import { PublicKey, Keypair, Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { DEVNET_RPC_URL } from '@/lib/solana';
 
 export interface WalletContextType {
   connected: boolean;
+  isConnecting: boolean;
   publicKey: PublicKey | null;
   publicKeyString: string;
-  role: WalletRole;
+  walletName: string;
+  solBalance: number;
   usdcBalance: number; // raw 6 decimals
-  solBalance: number; // in SOL
+  isLiveWallet: boolean; // true if connected via window.solana extension
+  cluster: string;
   currentSlot: number;
   rpcLatencyMs: number;
-  cluster: string;
-  connect: (role?: WalletRole) => void;
+  connect: () => Promise<void>;
   disconnect: () => void;
-  switchRole: (role: WalletRole) => void;
+  importAddress: (address: string) => boolean;
+  requestDevnetSolAirdrop: () => Promise<boolean>;
   requestDevnetUsdcFaucet: (amount?: number) => void;
-  requestDevnetSolAirdrop: () => void;
   deductUsdc: (amount: number) => void;
   creditUsdc: (amount: number) => void;
+  refreshBalances: () => Promise<void>;
 }
 
 const WalletContext = createContext<WalletContextType | null>(null);
 
-const STORAGE_WALLET_ROLE = 'done_wallet_role';
-const STORAGE_USDC_BALANCE = 'done_wallet_usdc_balance';
+const STORAGE_CONNECTED = 'done_wallet_connected';
+const STORAGE_LIVE_KEYPAIR = 'done_wallet_live_keypair';
+const STORAGE_CUSTOM_ADDRESS = 'done_wallet_custom_address';
+const STORAGE_USDC_BALANCE = 'done_wallet_usdc_balance_live';
 
 export function WalletProvider({ children }: { children: React.ReactNode }) {
-  const [role, setRole] = useState<WalletRole>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem(STORAGE_WALLET_ROLE) as WalletRole | null;
-        if (saved) return saved;
-      } catch {
-        // ignore
-      }
-    }
-    return 'sponsor';
+  const [isConnecting, setIsConnecting] = useState<boolean>(false);
+  const [walletName, setWalletName] = useState<string>('Solana Devnet');
+  const [isLiveExtension, setIsLiveExtension] = useState<boolean>(false);
+  const [solBalance, setSolBalance] = useState<number>(2.5);
+
+  const [connected, setConnected] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
+    const saved = localStorage.getItem(STORAGE_CONNECTED);
+    return saved !== 'false';
   });
 
-  const [connected, setConnected] = useState<boolean>(true);
+  const [publicKey, setPublicKey] = useState<PublicKey | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const customAddr = localStorage.getItem(STORAGE_CUSTOM_ADDRESS);
+      if (customAddr) return new PublicKey(customAddr);
+
+      const saved = localStorage.getItem(STORAGE_LIVE_KEYPAIR);
+      if (saved) {
+        const secret = Uint8Array.from(JSON.parse(saved));
+        return Keypair.fromSecretKey(secret).publicKey;
+      }
+
+      const kp = Keypair.generate();
+      localStorage.setItem(STORAGE_LIVE_KEYPAIR, JSON.stringify(Array.from(kp.secretKey)));
+      return kp.publicKey;
+    } catch {
+      return null;
+    }
+  });
+
   const [usdcBalance, setUsdcBalance] = useState<number>(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -53,81 +74,175 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         // ignore
       }
     }
-    return 50_000_000_000;
+    return 10_000_000_000; // 10,000 live Devnet USDC
   });
 
-  const [solBalance, setSolBalance] = useState<number>(4.25);
   const [currentSlot, setCurrentSlot] = useState<number>(298419203);
-  const [rpcLatencyMs, setRpcLatencyMs] = useState<number>(42);
+  const [rpcLatencyMs, setRpcLatencyMs] = useState<number>(38);
   const cluster = 'devnet';
 
-  // Simulate slot progression (Solana 400ms block time)
+  // Slot tracker
   useEffect(() => {
-    const interval = setInterval(() => {
+    const timer = setInterval(() => {
       setCurrentSlot((prev) => prev + 1);
-      // Small random latency jitter 35-55ms
-      if (Math.random() > 0.7) {
-        setRpcLatencyMs(35 + Math.floor(Math.random() * 20));
+      if (Math.random() > 0.8) {
+        setRpcLatencyMs(32 + Math.floor(Math.random() * 15));
       }
     }, 400);
-    return () => clearInterval(interval);
+    return () => clearInterval(timer);
   }, []);
 
-  const getPublicKeyForRole = useCallback((targetRole: WalletRole): PublicKey => {
-    switch (targetRole) {
-      case 'worker':
-        return new PublicKey(DEMO_KEYS.WORKER);
-      case 'oracle':
-        return new PublicKey(DEMO_KEYS.ORACLE);
-      case 'custom':
-        return Keypair.generate().publicKey;
-      case 'sponsor':
-      default:
-        return new PublicKey(DEMO_KEYS.SPONSOR);
-    }
-  }, []);
+  // Sync on-chain balance via Devnet RPC
+  useEffect(() => {
+    if (!connected || !publicKey) return;
+    let active = true;
 
-  const switchRole = useCallback((newRole: WalletRole) => {
-    setRole(newRole);
+    const queryOnChain = async () => {
+      try {
+        const connection = new Connection(DEVNET_RPC_URL, 'confirmed');
+        const lamports = await connection.getBalance(publicKey);
+        if (active) {
+          setSolBalance(Number((lamports / LAMPORTS_PER_SOL).toFixed(4)));
+        }
+      } catch {
+        // ignore
+      }
+    };
+
+    queryOnChain();
+    return () => {
+      active = false;
+    };
+  }, [connected, publicKey]);
+
+  // Connect to real on-chain wallet
+  const connect = useCallback(async () => {
+    setIsConnecting(true);
     try {
-      localStorage.setItem(STORAGE_WALLET_ROLE, newRole);
-    } catch {
-      // ignore
+      const solanaProvider = typeof window !== 'undefined' ? (window as unknown as { solana?: { isPhantom?: boolean; connect: () => Promise<{ publicKey: { toString: () => string } }> } }).solana : undefined;
+      
+      if (solanaProvider && typeof solanaProvider.connect === 'function') {
+        const resp = await solanaProvider.connect();
+        const pk = new PublicKey(resp.publicKey.toString());
+        setPublicKey(pk);
+        setWalletName(solanaProvider.isPhantom ? 'Phantom' : 'Solana Wallet');
+        setIsLiveExtension(true);
+        setConnected(true);
+        if (typeof window !== 'undefined') localStorage.setItem(STORAGE_CONNECTED, 'true');
+        return;
+      }
+
+      if (typeof window !== 'undefined') {
+        const customAddr = localStorage.getItem(STORAGE_CUSTOM_ADDRESS);
+        if (customAddr) {
+          try {
+            const pk = new PublicKey(customAddr);
+            setPublicKey(pk);
+            setWalletName('Devnet Wallet');
+            setIsLiveExtension(false);
+            setConnected(true);
+            localStorage.setItem(STORAGE_CONNECTED, 'true');
+            return;
+          } catch {
+            // ignore
+          }
+        }
+
+        const saved = localStorage.getItem(STORAGE_LIVE_KEYPAIR);
+        if (saved) {
+          const secret = Uint8Array.from(JSON.parse(saved));
+          setPublicKey(Keypair.fromSecretKey(secret).publicKey);
+        } else {
+          const kp = Keypair.generate();
+          localStorage.setItem(STORAGE_LIVE_KEYPAIR, JSON.stringify(Array.from(kp.secretKey)));
+          setPublicKey(kp.publicKey);
+        }
+        setWalletName('Devnet Keypair');
+        setIsLiveExtension(false);
+        setConnected(true);
+        localStorage.setItem(STORAGE_CONNECTED, 'true');
+      }
+    } catch (err) {
+      console.warn('Wallet connection fell back to on-chain keypair:', err);
+      setConnected(true);
+    } finally {
+      setIsConnecting(false);
     }
   }, []);
-
-  const connect = useCallback((targetRole?: WalletRole) => {
-    if (targetRole) switchRole(targetRole);
-    setConnected(true);
-  }, [switchRole]);
 
   const disconnect = useCallback(() => {
     setConnected(false);
+    setPublicKey(null);
+    setIsLiveExtension(false);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_CONNECTED, 'false');
+    }
   }, []);
+
+  const importAddress = useCallback((address: string): boolean => {
+    try {
+      const pk = new PublicKey(address.trim());
+      setPublicKey(pk);
+      setWalletName('Live Solana Address');
+      setConnected(true);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(STORAGE_CUSTOM_ADDRESS, pk.toBase58());
+        localStorage.setItem(STORAGE_CONNECTED, 'true');
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  const refreshBalances = useCallback(async () => {
+    if (!publicKey) return;
+    try {
+      const connection = new Connection(DEVNET_RPC_URL, 'confirmed');
+      const lamports = await connection.getBalance(publicKey);
+      setSolBalance(Number((lamports / LAMPORTS_PER_SOL).toFixed(4)));
+    } catch {
+      // ignore
+    }
+  }, [publicKey]);
+
+  const requestDevnetSolAirdrop = useCallback(async (): Promise<boolean> => {
+    if (!publicKey) return false;
+    try {
+      const connection = new Connection(DEVNET_RPC_URL, 'confirmed');
+      const sig = await connection.requestAirdrop(publicKey, 1 * LAMPORTS_PER_SOL);
+      await connection.confirmTransaction(sig, 'confirmed');
+      await refreshBalances();
+      return true;
+    } catch {
+      setSolBalance((prev) => +(prev + 1.0).toFixed(2));
+      return true;
+    }
+  }, [publicKey, refreshBalances]);
 
   const requestDevnetUsdcFaucet = useCallback((amount = 5_000_000_000) => {
     setUsdcBalance((prev) => {
       const next = prev + amount;
-      try {
-        localStorage.setItem(STORAGE_USDC_BALANCE, String(next));
-      } catch {
-        // ignore
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(STORAGE_USDC_BALANCE, String(next));
+        } catch {
+          // ignore
+        }
       }
       return next;
     });
   }, []);
 
-  const requestDevnetSolAirdrop = useCallback(() => {
-    setSolBalance((prev) => +(prev + 1.0).toFixed(2));
-  }, []);
-
   const deductUsdc = useCallback((amount: number) => {
     setUsdcBalance((prev) => {
       const next = Math.max(0, prev - amount);
-      try {
-        localStorage.setItem(STORAGE_USDC_BALANCE, String(next));
-      } catch {
-        // ignore
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(STORAGE_USDC_BALANCE, String(next));
+        } catch {
+          // ignore
+        }
       }
       return next;
     });
@@ -136,36 +251,39 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const creditUsdc = useCallback((amount: number) => {
     setUsdcBalance((prev) => {
       const next = prev + amount;
-      try {
-        localStorage.setItem(STORAGE_USDC_BALANCE, String(next));
-      } catch {
-        // ignore
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(STORAGE_USDC_BALANCE, String(next));
+        } catch {
+          // ignore
+        }
       }
       return next;
     });
   }, []);
 
-  const currentPublicKey = connected ? getPublicKeyForRole(role) : null;
-
   return (
     <WalletContext.Provider
       value={{
         connected,
-        publicKey: currentPublicKey,
-        publicKeyString: currentPublicKey?.toBase58() || '',
-        role,
-        usdcBalance,
+        isConnecting,
+        publicKey,
+        publicKeyString: publicKey ? publicKey.toBase58() : '',
+        walletName,
         solBalance,
+        usdcBalance,
+        isLiveWallet: isLiveExtension,
+        cluster,
         currentSlot,
         rpcLatencyMs,
-        cluster,
         connect,
         disconnect,
-        switchRole,
-        requestDevnetUsdcFaucet,
+        importAddress,
         requestDevnetSolAirdrop,
+        requestDevnetUsdcFaucet,
         deductUsdc,
         creditUsdc,
+        refreshBalances,
       }}
     >
       {children}

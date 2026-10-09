@@ -2,42 +2,72 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { useAgreements } from '@/hooks/useAgreement';
+import { useAgreements, AGREEMENTS_QUERY_KEY } from '@/hooks/useAgreement';
 import { useWallet } from '@/components/web3/WalletContext';
-import { AgreementState, MilestoneState } from '@/types/protocol';
+import { AgreementState, MilestoneState, AgreementAccount, MilestoneAccount } from '@/types/protocol';
 import { formatUsdc, truncateAddress } from '@/lib/solana';
 import { AgreementStateBadge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { DoneLogo } from '@/components/protocol/DoneLogo';
+import { CreateAgreementDrawer } from '@/components/protocol/CreateAgreementDrawer';
+import { QuickActionModal, QuickActionType } from '@/components/protocol/QuickActionModal';
+import { useTransactionExecution } from '@/hooks/useTransactionExecution';
+import { TxStateModal } from '@/components/web3/TxStateModal';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   FileCode,
   PlusCircle,
-  ChevronRight,
   Search,
-  Lock,
+  ArrowRight,
+  ShieldCheck,
+  UploadCloud,
+  Coins,
 } from 'lucide-react';
 
 export default function AgreementsExplorerPage() {
   const { data: agreements = [], isLoading } = useAgreements();
   const { publicKeyString } = useWallet();
+  const { txState, execute, reset: resetTx, isOpen: isTxOpen } = useTransactionExecution();
+  const queryClient = useQueryClient();
 
-  const [activeFilter, setActiveFilter] = useState<'all' | 'sponsoring' | 'assigned' | 'completed'>('all');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'completed'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
+
+  const [drawerState, setDrawerState] = useState<{
+    isOpen: boolean;
+    type: QuickActionType;
+    agreement: AgreementAccount | null;
+    milestone?: MilestoneAccount;
+  }>({
+    isOpen: false,
+    type: 'inspect',
+    agreement: null,
+  });
+
+  const openDrawer = (
+    type: QuickActionType,
+    agreement: AgreementAccount,
+    milestone?: MilestoneAccount
+  ) => {
+    setDrawerState({
+      isOpen: true,
+      type,
+      agreement,
+      milestone,
+    });
+  };
 
   const filterOptions = [
-    { id: 'all', label: 'All' },
-    { id: 'sponsoring', label: 'Sponsoring' },
-    { id: 'assigned', label: 'Assigned (Worker)' },
+    { id: 'all', label: `All (${agreements.length})` },
+    { id: 'active', label: 'Active Escrows' },
     { id: 'completed', label: 'Completed' },
   ];
 
   const filteredAgreements = agreements.filter((a) => {
-    // Role filter
-    if (activeFilter === 'sponsoring' && a.sponsor !== publicKeyString) return false;
-    if (activeFilter === 'assigned' && a.worker !== publicKeyString) return false;
+    if (activeFilter === 'active' && (a.state === AgreementState.COMPLETED || a.state === AgreementState.CANCELLED)) return false;
     if (activeFilter === 'completed' && a.state !== AgreementState.COMPLETED) return false;
 
-    // Search filter
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       return (
@@ -52,35 +82,68 @@ export default function AgreementsExplorerPage() {
 
   return (
     <div className="space-y-6 font-mono text-neutral-100">
-      {/* Header & New Button */}
+      <CreateAgreementDrawer
+        isOpen={isCreateDrawerOpen}
+        onClose={() => setIsCreateDrawerOpen(false)}
+        onSuccess={async () => {
+          await queryClient.invalidateQueries({ queryKey: AGREEMENTS_QUERY_KEY });
+        }}
+      />
+
+      {drawerState.agreement && (
+        <QuickActionModal
+          isOpen={drawerState.isOpen}
+          onClose={() => setDrawerState((prev) => ({ ...prev, isOpen: false }))}
+          actionType={drawerState.type}
+          agreement={drawerState.agreement}
+          milestone={drawerState.milestone}
+          onExecute={execute}
+        />
+      )}
+
+      <TxStateModal
+        isOpen={isTxOpen}
+        state={txState}
+        onClose={() => {
+          resetTx();
+          queryClient.invalidateQueries({ queryKey: AGREEMENTS_QUERY_KEY });
+        }}
+      />
+
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#26262a] pb-4">
-        <div>
-          <div className="flex items-center gap-2 text-xs text-neutral-400 mb-1">
-            <FileCode className="w-4 h-4 text-white" />
-            <span>ON-CHAIN CATALOG</span>
+        <div className="flex items-center gap-3">
+          <DoneLogo className="w-8 h-8" />
+          <div>
+            <div className="flex items-center gap-2 text-xs text-violet-400 mb-0.5">
+              <FileCode className="w-3.5 h-3.5" />
+              <span className="font-bold tracking-wider">ESCROW REGISTRY</span>
+            </div>
+            <h1 className="text-xl sm:text-2xl font-bold text-white">Agreements</h1>
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-white">Agreements Explorer</h1>
         </div>
 
-        <Link href="/agreements/new">
-          <Button variant="primary" size="md">
-            <PlusCircle className="w-4 h-4 mr-2" />
-            Create Agreement
-          </Button>
-        </Link>
+        <Button
+          variant="primary"
+          size="md"
+          onClick={() => setIsCreateDrawerOpen(true)}
+          className="flex items-center gap-2 self-start sm:self-auto"
+        >
+          <PlusCircle className="w-4 h-4" />
+          Create Agreement
+        </Button>
       </div>
 
-      {/* Filter Segment Control & Search */}
+      {/* Controls */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        {/* Segmented control */}
         <div className="flex items-center bg-[#0d0d0f] border border-[#26262a] p-1 rounded-xl">
           {filterOptions.map((opt) => (
             <button
               key={opt.id}
               onClick={() => setActiveFilter(opt.id as any)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                 activeFilter === opt.id
-                  ? 'bg-violet-600 text-white shadow-sm font-bold'
+                  ? 'bg-violet-600 text-white shadow-sm'
                   : 'text-neutral-400 hover:text-white'
               }`}
             >
@@ -89,99 +152,174 @@ export default function AgreementsExplorerPage() {
           ))}
         </div>
 
-        {/* Search input */}
         <div className="relative">
-          <Search className="w-4 h-4 absolute left-3 top-3 text-neutral-500" />
+          <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-neutral-500" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search agreement, worker, address..."
-            className="w-full sm:w-64 bg-[#0d0d0f] border border-[#26262a] rounded-xl pl-9 pr-3.5 py-2 text-xs text-neutral-100 placeholder-neutral-500 focus:outline-none focus:border-violet-500 transition-colors"
+            placeholder="Filter by title or address..."
+            className="w-full sm:w-64 bg-[#0d0d0f] border border-[#26262a] rounded-xl pl-9 pr-3.5 py-2 text-xs text-neutral-100 placeholder-neutral-500 focus:outline-none focus:border-violet-500"
           />
         </div>
       </div>
 
-      {/* Agreement List Cards (rounded-2xl, #0d0d0f, hover border highlight) */}
-      {isLoading ? (
-        <div className="py-12 text-center text-xs text-neutral-400">Loading catalog accounts...</div>
+      {/* List */}
+      {agreements.length === 0 ? (
+        <div className="p-10 text-center bg-[#0d0d0f] border border-[#26262a] rounded-3xl space-y-4">
+          <DoneLogo className="w-14 h-14 mx-auto" />
+          <div className="space-y-1">
+            <h3 className="text-base font-bold text-white">No Escrow Agreements</h3>
+            <p className="text-xs text-neutral-400">
+              Create a milestone agreement with cryptographic proof & deterministic payouts.
+            </p>
+          </div>
+          <Button
+            variant="primary"
+            onClick={() => setIsCreateDrawerOpen(true)}
+            className="inline-flex items-center gap-2"
+          >
+            <PlusCircle className="w-4 h-4" /> Create Agreement
+          </Button>
+        </div>
       ) : filteredAgreements.length === 0 ? (
-        <Card className="py-12 text-center text-xs text-neutral-500">
-          No agreements found matching your filter.
-        </Card>
+        <div className="p-8 text-center bg-[#0d0d0f] border border-[#26262a] rounded-2xl text-xs text-neutral-400">
+          No agreements matching this search.
+        </div>
       ) : (
-        <div className="grid grid-cols-1 gap-3.5">
+        <div className="space-y-3">
           {filteredAgreements.map((agreement) => {
-            const settledCount = agreement.milestones.filter(
+            const nextMilestone =
+              agreement.milestones.find((m) => m.state !== MilestoneState.RELEASED) ||
+              agreement.milestones[agreement.milestones.length - 1];
+
+            const releasedCount = agreement.milestones.filter(
               (m) => m.state === MilestoneState.RELEASED
             ).length;
-            const settledAmount = agreement.milestones
-              .filter((m) => m.state === MilestoneState.RELEASED)
-              .reduce((sum, m) => sum + m.amountUsdc, 0);
 
             const progressPct =
-              agreement.milestoneCount > 0
-                ? Math.round((settledCount / agreement.milestoneCount) * 100)
+              agreement.milestones.length > 0
+                ? Math.round((releasedCount / agreement.milestones.length) * 100)
                 : 0;
 
             return (
-              <Link
+              <div
                 key={agreement.publicKey}
-                href={`/agreements/${agreement.publicKey}`}
-                className="group block"
+                className="p-5 bg-[#0d0d0f] hover:bg-[#121215] border border-[#26262a] hover:border-violet-500/40 rounded-2xl transition-all space-y-3"
               >
-                <div className="bg-[#0d0d0f] border border-[#26262a] group-hover:border-violet-500/40 rounded-2xl p-5 transition-all space-y-4">
-                  {/* Top row */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2.5">
-                        <h3 className="text-base font-bold text-white group-hover:text-violet-300 transition-colors">
-                          {agreement.title}
-                        </h3>
-                        <AgreementStateBadge state={agreement.state} />
-                      </div>
-                      <p className="text-xs text-neutral-400 line-clamp-1">{agreement.description}</p>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <AgreementStateBadge state={agreement.state} />
+                      <Link
+                        href={`/agreements/${agreement.publicKey}`}
+                        className="text-base font-bold text-white hover:text-violet-300 transition-colors"
+                      >
+                        {agreement.title}
+                      </Link>
                     </div>
-
-                    <div className="text-left sm:text-right flex-shrink-0">
-                      <div className="text-lg font-bold text-emerald-400">
-                        ${formatUsdc(agreement.totalAmountUsdc)} <span className="text-xs text-neutral-400">USDC</span>
-                      </div>
-                      <span className="text-[10px] text-neutral-500 block uppercase">
-                        ${formatUsdc(settledAmount)} Released
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Middle row: Progress Track */}
-                  <div className="space-y-1.5 pt-2 border-t border-[#202024]">
-                    <div className="flex items-center justify-between text-xs text-neutral-400">
-                      <span>
-                        Milestones: <span className="text-neutral-200">{settledCount} / {agreement.milestoneCount} Settled</span>
-                      </span>
-                      <span>{progressPct}% Completed</span>
-                    </div>
-                    <div className="w-full h-1.5 bg-[#141416] rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-violet-600 to-violet-400 rounded-full transition-all duration-300"
-                        style={{ width: `${progressPct}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Bottom row: Monospace IDs */}
-                  <div className="flex items-center justify-between pt-1 text-[11px] text-neutral-400 font-mono">
-                    <div className="flex items-center gap-4">
+                    <div className="text-xs text-neutral-400 flex items-center gap-3">
                       <span>Worker: {truncateAddress(agreement.worker, 4)}</span>
-                      <span className="hidden sm:inline">Sponsor: {truncateAddress(agreement.sponsor, 4)}</span>
+                      <span>•</span>
+                      <span>{agreement.milestones.length} Milestones</span>
                     </div>
-                    <div className="flex items-center gap-1 text-neutral-400 group-hover:text-white transition-colors">
-                      <span>Inspect Agreement</span>
-                      <ChevronRight className="w-3.5 h-3.5" />
+                  </div>
+
+                  <div className="text-left sm:text-right">
+                    <div className="text-lg font-black text-violet-400">
+                      ${formatUsdc(agreement.totalAmountUsdc)} USDC
+                    </div>
+                    <div className="text-[11px] text-neutral-400">
+                      {releasedCount} / {agreement.milestones.length} Settled
                     </div>
                   </div>
                 </div>
-              </Link>
+
+                <div className="w-full h-1.5 bg-[#1a1a1e] rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-violet-500 transition-all duration-300"
+                    style={{ width: `${progressPct}%` }}
+                  />
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-[#26262a]/60">
+                  <div className="flex flex-wrap gap-1.5">
+                    {agreement.milestones.map((m, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => openDrawer('inspect', agreement, m)}
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-colors ${
+                          m.state === MilestoneState.RELEASED
+                            ? 'bg-emerald-950/30 text-emerald-300 border-emerald-500/30'
+                            : m.state === MilestoneState.VERIFIED
+                            ? 'bg-violet-950/30 text-violet-300 border-violet-500/30 font-bold'
+                            : m.state === MilestoneState.EVIDENCE_SUBMITTED
+                            ? 'bg-amber-950/30 text-amber-300 border-amber-500/30'
+                            : 'bg-[#141416] text-neutral-400 border-[#26262a]'
+                        }`}
+                      >
+                        #{idx + 1}: ${formatUsdc(m.amountUsdc)}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {agreement.state === AgreementState.DRAFT && (
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => openDrawer('fund', agreement)}
+                        className="text-xs"
+                      >
+                        Fund Escrow
+                      </Button>
+                    )}
+
+                    {nextMilestone && nextMilestone.state === MilestoneState.PENDING && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => openDrawer('submit_evidence', agreement, nextMilestone)}
+                        className="text-xs"
+                      >
+                        <UploadCloud className="w-3.5 h-3.5 mr-1 text-violet-400" />
+                        Submit Proof
+                      </Button>
+                    )}
+
+                    {nextMilestone && nextMilestone.state === MilestoneState.EVIDENCE_SUBMITTED && (
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => openDrawer('verify', agreement, nextMilestone)}
+                        className="text-xs"
+                      >
+                        <ShieldCheck className="w-3.5 h-3.5 mr-1" />
+                        Verify
+                      </Button>
+                    )}
+
+                    {nextMilestone && nextMilestone.state === MilestoneState.VERIFIED && (
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => openDrawer('release', agreement, nextMilestone)}
+                        className="text-xs bg-emerald-600 hover:bg-emerald-500"
+                      >
+                        <Coins className="w-3.5 h-3.5 mr-1" />
+                        Authorize Release
+                      </Button>
+                    )}
+
+                    <Link
+                      href={`/agreements/${agreement.publicKey}`}
+                      className="px-3 py-1.5 rounded-xl bg-[#141416] hover:bg-[#1a1a1e] border border-[#26262a] text-neutral-300 text-xs font-semibold inline-flex items-center gap-1"
+                    >
+                      Details <ArrowRight className="w-3 h-3" />
+                    </Link>
+                  </div>
+                </div>
+              </div>
             );
           })}
         </div>

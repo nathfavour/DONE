@@ -158,7 +158,7 @@ export function EvidenceForm({ agreementKey, milestone, onExecute }: EvidenceFor
               <button
                 type="button"
                 onClick={addLink}
-                className="text-[11px] text-cyan-400 hover:text-cyan-300 inline-flex items-center gap-1"
+                className="text-[11px] text-violet-400 hover:text-violet-300 inline-flex items-center gap-1"
               >
                 <Plus className="w-3 h-3" /> Add Link
               </button>
