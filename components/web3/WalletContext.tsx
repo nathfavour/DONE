@@ -21,6 +21,8 @@ export interface WalletContextType {
   switchRole: (role: WalletRole) => void;
   requestDevnetUsdcFaucet: (amount?: number) => void;
   requestDevnetSolAirdrop: () => void;
+  deductUsdc: (amount: number) => void;
+  creditUsdc: (amount: number) => void;
 }
 
 const WalletContext = createContext<WalletContextType | null>(null);
@@ -119,6 +121,30 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     setSolBalance((prev) => +(prev + 1.0).toFixed(2));
   }, []);
 
+  const deductUsdc = useCallback((amount: number) => {
+    setUsdcBalance((prev) => {
+      const next = Math.max(0, prev - amount);
+      try {
+        localStorage.setItem(STORAGE_USDC_BALANCE, String(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  }, []);
+
+  const creditUsdc = useCallback((amount: number) => {
+    setUsdcBalance((prev) => {
+      const next = prev + amount;
+      try {
+        localStorage.setItem(STORAGE_USDC_BALANCE, String(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  }, []);
+
   const currentPublicKey = connected ? getPublicKeyForRole(role) : null;
 
   return (
@@ -138,6 +164,8 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         switchRole,
         requestDevnetUsdcFaucet,
         requestDevnetSolAirdrop,
+        deductUsdc,
+        creditUsdc,
       }}
     >
       {children}

@@ -218,9 +218,24 @@ export function VerificationCard({
 
           {/* Criteria Checklist */}
           <div className="space-y-2">
-            <label className="text-xs font-semibold text-zinc-300 tracking-wider uppercase block">
-              CANONICAL CRITERIA AUDIT CHECKLIST:
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-zinc-300 tracking-wider uppercase block">
+                CANONICAL CRITERIA AUDIT CHECKLIST:
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  const all: Record<number, boolean> = {};
+                  milestone.dodCriteria.forEach((_, i) => {
+                    all[i] = true;
+                  });
+                  setCheckedCriteria(all);
+                }}
+                className="text-[10px] text-cyan-300 hover:text-cyan-200 bg-zinc-900 px-2 py-0.5 border border-zinc-700"
+              >
+                ⚡ Check All Criteria
+              </button>
+            </div>
             <div className="space-y-2">
               {milestone.dodCriteria.map((c, idx) => (
                 <div

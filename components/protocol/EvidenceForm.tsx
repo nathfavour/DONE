@@ -98,7 +98,23 @@ export function EvidenceForm({ agreementKey, milestone, onExecute }: EvidenceFor
             SUBMIT VERIFIABLE WORK EVIDENCE
           </h3>
         </div>
-        <span className="text-[11px] text-zinc-400">WORKER ACTION</span>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setMetadataUri('https://arweave.net/tx_indexer_geyser_final_v1.tar.gz');
+              setNotes('Executed all invariants and unit tests successfully with 100% assertion pass rate.');
+              setDeliverableLinks([
+                'https://github.com/done-protocol/core/pull/104',
+                'https://arweave.net/tx_indexer_geyser_final_v1.tar.gz',
+              ]);
+            }}
+            className="text-[10px] bg-cyan-950 hover:bg-cyan-900 text-cyan-300 px-2 py-0.5 border border-cyan-800"
+          >
+            ⚡ Auto-Fill Demo Proof
+          </button>
+          <span className="text-[11px] text-zinc-400">WORKER ACTION</span>
+        </div>
       </CardHeader>
 
       <form onSubmit={handleSubmit}>

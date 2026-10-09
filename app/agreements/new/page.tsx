@@ -224,17 +224,77 @@ export default function NewAgreementPage() {
       <TxStateModal state={txState} isOpen={isOpen} onClose={reset} />
 
       {/* Page Header */}
-      <div className="border-b border-zinc-800 pb-4">
-        <div className="flex items-center gap-2 text-xs text-zinc-400 mb-1">
-          <ShieldCheck className="w-4 h-4 text-cyan-400" />
-          <span>INITIALIZE ANCHOR AGREEMENT ACCOUNT</span>
+      <div className="border-b border-zinc-800 pb-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-2 text-xs text-zinc-400 mb-1">
+              <ShieldCheck className="w-4 h-4 text-cyan-400" />
+              <span>INITIALIZE ANCHOR AGREEMENT ACCOUNT</span>
+            </div>
+            <h1 className="text-xl sm:text-2xl font-bold text-zinc-100">
+              Agreement Creation Wizard
+            </h1>
+          </div>
+
+          <Button variant="outline" size="sm" onClick={() => router.push('/')}>
+            Back to Workspace
+          </Button>
         </div>
-        <h1 className="text-xl sm:text-2xl font-bold text-zinc-100">
-          Agreement & Milestone Creation Wizard
-        </h1>
-        <p className="text-xs text-zinc-400 mt-1">
-          Establish deterministic terms and commit canonical SHA-256 Definition of Done requirements.
-        </p>
+
+        {/* 1-Click Demo Presets Bar */}
+        <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
+          <span className="text-zinc-500 text-[11px] uppercase font-bold">1-Click Presets:</span>
+          <button
+            type="button"
+            onClick={() => {
+              setTitle('Rust Anchor Smart Contract Audit');
+              setDescription('Security review and invariant fuzz testing of protocol vaults.');
+              setTermsText('1. Scope covers CPI calls and token transfer vaults.\n2. Remediation report mandatory before final release.');
+              setMilestones([
+                {
+                  title: 'Threat Modeling & Static Verification',
+                  description: 'Architecture review and cargo audit report.',
+                  amountUsdcString: '4000',
+                  verificationType: VerificationType.SPONSOR,
+                  criteria: ['Threat model document delivered', 'Zero critical findings unaddressed'],
+                  computedDodHash: '',
+                },
+                {
+                  title: 'Trident Invariant Fuzzing & Report',
+                  description: '10M iterations invariant assertion test suite.',
+                  amountUsdcString: '6000',
+                  verificationType: VerificationType.SPONSOR,
+                  criteria: ['10M Trident iterations passed', 'Remediation pull request reviewed'],
+                  computedDodHash: '',
+                },
+              ]);
+            }}
+            className="px-2.5 py-1 bg-zinc-900 hover:bg-zinc-800 text-cyan-300 border border-zinc-800 hover:border-cyan-500 text-xs transition-colors"
+          >
+            🛡️ Security Audit ($10K USDC)
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setTitle('Solana Geyser RPC Indexer');
+              setDescription('High-performance streaming engine for on-chain state sync.');
+              setTermsText('1. Dockerized binary with automated health check.\n2. Sub-50ms p95 query response latency.');
+              setMilestones([
+                {
+                  title: 'Core Plugin Ingestion Pipeline',
+                  description: 'Real-time WebSocket accounts sync.',
+                  amountUsdcString: '5000',
+                  verificationType: VerificationType.ON_CHAIN_ORACLE,
+                  criteria: ['Geyser Rust plugin compiled', 'Zero dropped slots in 24h test'],
+                  computedDodHash: '',
+                },
+              ]);
+            }}
+            className="px-2.5 py-1 bg-zinc-900 hover:bg-zinc-800 text-amber-300 border border-zinc-800 hover:border-amber-500 text-xs transition-colors"
+          >
+            ⚡ Geyser Indexer ($5K USDC)
+          </button>
+        </div>
       </div>
 
       {/* Section 1: Agreement Terms & Parties */}

@@ -1,35 +1,64 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useSponsorAgreements } from '@/hooks/useAgreement';
 import { useWallet } from '@/components/web3/WalletContext';
-import { AgreementState, MilestoneState } from '@/types/protocol';
+import { useTransactionExecution } from '@/hooks/useTransactionExecution';
+import { AgreementAccount, AgreementState, MilestoneAccount, MilestoneState } from '@/types/protocol';
 import { formatUsdc, truncateAddress } from '@/lib/solana';
-import { AgreementStateBadge, MilestoneStateBadge } from '@/components/ui/Badge';
+import { AgreementStateBadge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
+import { TxStateModal } from '@/components/web3/TxStateModal';
+import { QuickActionModal, QuickActionType } from '@/components/protocol/QuickActionModal';
 import {
   ShieldCheck,
   PlusCircle,
-  Lock,
-  CheckCircle2,
   AlertCircle,
-  ExternalLink,
   ChevronRight,
-  TrendingUp,
+  Lock,
 } from 'lucide-react';
 
 export default function SponsorDashboardPage() {
   const { publicKeyString, role, switchRole } = useWallet();
   const { data: agreements = [], isLoading } = useSponsorAgreements(publicKeyString);
+  const { txState, execute, reset: resetTx, isOpen: isTxOpen } = useTransactionExecution();
+
+  const [modalState, setModalState] = useState<{
+    isOpen: boolean;
+    type: QuickActionType;
+    agreement: AgreementAccount | null;
+    milestone?: MilestoneAccount;
+  }>({
+    isOpen: false,
+    type: 'verify',
+    agreement: null,
+  });
+
+  const openAction = (
+    type: QuickActionType,
+    agreement: AgreementAccount,
+    milestone?: MilestoneAccount
+  ) => {
+    setModalState({
+      isOpen: true,
+      type,
+      agreement,
+      milestone,
+    });
+  };
+
+  const closeAction = () => {
+    setModalState((prev) => ({ ...prev, isOpen: false }));
+  };
 
   // Calculate metrics
   const totalEscrowLocked = agreements.reduce((sum, a) => {
     const released = a.milestones
       .filter((m) => m.state === MilestoneState.RELEASED)
       .reduce((s, m) => s + m.amountUsdc, 0);
-    return sum + (a.totalAmountUsdc - released);
+    return sum + (a.state !== AgreementState.DRAFT ? a.totalAmountUsdc - released : 0);
   }, 0);
 
   const totalSettledPaid = agreements.reduce((sum, a) => {
@@ -49,7 +78,20 @@ export default function SponsorDashboardPage() {
   );
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8 font-mono">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6 font-mono text-zinc-100">
+      <TxStateModal state={txState} isOpen={isTxOpen} onClose={resetTx} />
+
+      {modalState.agreement && (
+        <QuickActionModal
+          isOpen={modalState.isOpen}
+          onClose={closeAction}
+          actionType={modalState.type}
+          agreement={modalState.agreement}
+          milestone={modalState.milestone}
+          onExecute={execute}
+        />
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800 pb-4">
         <div>
@@ -57,10 +99,7 @@ export default function SponsorDashboardPage() {
             <ShieldCheck className="w-4 h-4 text-cyan-400" />
             <span>CAPITAL SPONSOR PORTFOLIO</span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-zinc-100">Sponsor Escrow Dashboard</h1>
-          <p className="text-xs text-zinc-400 mt-1">
-            Track locked escrow vaults, monitor worker deliverables, and audit submitted evidence.
-          </p>
+          <h1 className="text-xl sm:text-2xl font-bold text-zinc-100">Sponsor Escrow Console</h1>
         </div>
 
         <div className="flex items-center gap-3">
@@ -82,7 +121,7 @@ export default function SponsorDashboardPage() {
       </div>
 
       {/* Metrics Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="p-4 bg-zinc-950 border border-zinc-800">
           <span className="text-[10px] text-zinc-400 uppercase tracking-wider block">
             LOCKED IN ESCROW VAULTS
@@ -122,7 +161,7 @@ export default function SponsorDashboardPage() {
             <div className="flex items-center gap-2 text-amber-400">
               <AlertCircle className="w-4 h-4" />
               <h3 className="font-bold text-sm tracking-wider uppercase">
-                ACTION REQUIRED: DELIVERABLES READY FOR VERIFICATION AUDIT ({pendingVerifications.length})
+                ACTION REQUIRED: DELIVERABLES READY FOR AUDIT ({pendingVerifications.length})
               </h3>
             </div>
             <span className="text-[10px] text-amber-300 font-mono">NEEDS REVIEW</span>
@@ -140,12 +179,14 @@ export default function SponsorDashboardPage() {
                   </div>
                   <p className="text-zinc-400 text-[11px] mt-0.5">Agreement: {agreement.title}</p>
                 </div>
-                <Link href={`/agreements/${agreement.publicKey}/m/${milestone.index}`}>
-                  <Button variant="primary" size="sm">
-                    Perform DoD Audit
-                    <ChevronRight className="w-3 h-3 ml-1" />
-                  </Button>
-                </Link>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => openAction('verify', agreement, milestone)}
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 mr-1 text-black" />
+                  Perform DoD Audit
+                </Button>
               </div>
             ))}
           </CardContent>
@@ -153,8 +194,10 @@ export default function SponsorDashboardPage() {
       )}
 
       {/* All Sponsored Agreements */}
-      <div className="space-y-4">
-        <h2 className="text-base font-bold text-zinc-100">Sponsored Agreements ({agreements.length})</h2>
+      <div className="space-y-3">
+        <h2 className="text-sm font-bold text-zinc-200 uppercase tracking-wider">
+          Sponsored Agreements ({agreements.length})
+        </h2>
 
         {isLoading ? (
           <div className="p-6 text-center text-xs text-zinc-400">Loading agreements...</div>
@@ -184,10 +227,13 @@ export default function SponsorDashboardPage() {
                     <span>Worker: {truncateAddress(agreement.worker, 4)}</span>
                     <span>•</span>
                     <span>Milestones: {agreement.milestones.length}</span>
+                    {agreement.state === AgreementState.DRAFT && (
+                      <span className="text-amber-400 font-bold">• Escrow Unfunded</span>
+                    )}
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 pt-2 sm:pt-0 border-zinc-800">
+                <div className="flex items-center justify-between sm:justify-end gap-3 border-t sm:border-t-0 pt-2 sm:pt-0 border-zinc-800">
                   <div className="text-right">
                     <span className="text-sm font-bold text-emerald-400 block">
                       ${formatUsdc(agreement.totalAmountUsdc)} USDC
@@ -195,12 +241,23 @@ export default function SponsorDashboardPage() {
                     <span className="text-[10px] text-zinc-400">Total Budget</span>
                   </div>
 
-                  <Link href={`/agreements/${agreement.publicKey}`}>
-                    <Button variant="secondary" size="sm">
-                      Inspect
-                      <ChevronRight className="w-3.5 h-3.5 ml-1" />
+                  {agreement.state === AgreementState.DRAFT ? (
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={() => openAction('fund', agreement)}
+                    >
+                      <Lock className="w-3.5 h-3.5 mr-1 text-black" />
+                      Fund Escrow
                     </Button>
-                  </Link>
+                  ) : (
+                    <Link href={`/agreements/${agreement.publicKey}`}>
+                      <Button variant="secondary" size="sm">
+                        Console
+                        <ChevronRight className="w-3.5 h-3.5 ml-1" />
+                      </Button>
+                    </Link>
+                  )}
                 </div>
               </div>
             ))}

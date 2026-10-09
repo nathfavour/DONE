@@ -1,28 +1,56 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useWorkerAgreements } from '@/hooks/useAgreement';
 import { useWallet } from '@/components/web3/WalletContext';
-import { MilestoneState } from '@/types/protocol';
+import { useTransactionExecution } from '@/hooks/useTransactionExecution';
+import { AgreementAccount, MilestoneAccount, MilestoneState } from '@/types/protocol';
 import { formatUsdc, truncateAddress } from '@/lib/solana';
-import { AgreementStateBadge, MilestoneStateBadge } from '@/components/ui/Badge';
+import { AgreementStateBadge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
+import { TxStateModal } from '@/components/web3/TxStateModal';
+import { QuickActionModal, QuickActionType } from '@/components/protocol/QuickActionModal';
 import {
   Briefcase,
   Coins,
-  CheckCircle2,
-  Clock,
-  ArrowRight,
   UploadCloud,
   ChevronRight,
-  AlertCircle,
 } from 'lucide-react';
 
 export default function WorkerDashboardPage() {
   const { publicKeyString, role, switchRole } = useWallet();
   const { data: agreements = [], isLoading } = useWorkerAgreements(publicKeyString);
+  const { txState, execute, reset: resetTx, isOpen: isTxOpen } = useTransactionExecution();
+
+  const [modalState, setModalState] = useState<{
+    isOpen: boolean;
+    type: QuickActionType;
+    agreement: AgreementAccount | null;
+    milestone?: MilestoneAccount;
+  }>({
+    isOpen: false,
+    type: 'submit_evidence',
+    agreement: null,
+  });
+
+  const openAction = (
+    type: QuickActionType,
+    agreement: AgreementAccount,
+    milestone?: MilestoneAccount
+  ) => {
+    setModalState({
+      isOpen: true,
+      type,
+      agreement,
+      milestone,
+    });
+  };
+
+  const closeAction = () => {
+    setModalState((prev) => ({ ...prev, isOpen: false }));
+  };
 
   // Metrics
   const totalSettledEarnings = agreements.reduce((sum, a) => {
@@ -56,7 +84,20 @@ export default function WorkerDashboardPage() {
   );
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8 font-mono">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6 font-mono text-zinc-100">
+      <TxStateModal state={txState} isOpen={isTxOpen} onClose={resetTx} />
+
+      {modalState.agreement && (
+        <QuickActionModal
+          isOpen={modalState.isOpen}
+          onClose={closeAction}
+          actionType={modalState.type}
+          agreement={modalState.agreement}
+          milestone={modalState.milestone}
+          onExecute={execute}
+        />
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800 pb-4">
         <div>
@@ -64,10 +105,7 @@ export default function WorkerDashboardPage() {
             <Briefcase className="w-4 h-4 text-amber-400" />
             <span>BUILDER & WORKER PORTFOLIO</span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-zinc-100">Worker Deliverables Hub</h1>
-          <p className="text-xs text-zinc-400 mt-1">
-            Track assigned milestones, submit cryptographic evidence, and claim verified USDC settlements.
-          </p>
+          <h1 className="text-xl sm:text-2xl font-bold text-zinc-100">Worker Deliverables Console</h1>
         </div>
 
         <div className="flex items-center gap-3">
@@ -83,7 +121,7 @@ export default function WorkerDashboardPage() {
       </div>
 
       {/* Metrics Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="p-4 bg-zinc-950 border border-zinc-800">
           <span className="text-[10px] text-zinc-400 uppercase tracking-wider block">
             SETTLED EARNINGS (PAID)
@@ -141,12 +179,15 @@ export default function WorkerDashboardPage() {
                   </div>
                   <p className="text-zinc-400 text-[11px] mt-0.5">Agreement: {agreement.title}</p>
                 </div>
-                <Link href={`/agreements/${agreement.publicKey}/m/${milestone.index}`}>
-                  <Button variant="primary" size="sm">
-                    Release ${formatUsdc(milestone.amountUsdc)} USDC
-                    <ChevronRight className="w-3 h-3 ml-1" />
-                  </Button>
-                </Link>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => openAction('release', agreement, milestone)}
+                  className="bg-emerald-500 hover:bg-emerald-400 text-black border-emerald-400"
+                >
+                  <Coins className="w-3.5 h-3.5 mr-1 text-black" />
+                  Release ${formatUsdc(milestone.amountUsdc)} USDC
+                </Button>
               </div>
             ))}
           </CardContent>
@@ -177,16 +218,18 @@ export default function WorkerDashboardPage() {
                     <span className="text-emerald-400 font-bold">${formatUsdc(milestone.amountUsdc)} USDC</span>
                   </div>
                   <p className="text-zinc-400 text-[11px]">Agreement: {agreement.title}</p>
-                  <span className="text-[10px] text-zinc-400 block">
+                  <span className="text-[10px] text-zinc-500 block">
                     Criteria count: {milestone.dodCriteria.length} items to fulfill
                   </span>
                 </div>
-                <Link href={`/agreements/${agreement.publicKey}/m/${milestone.index}`}>
-                  <Button variant="secondary" size="sm">
-                    Submit Evidence
-                    <ChevronRight className="w-3 h-3 ml-1" />
-                  </Button>
-                </Link>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => openAction('submit_evidence', agreement, milestone)}
+                >
+                  <UploadCloud className="w-3.5 h-3.5 mr-1 text-black" />
+                  Submit Evidence
+                </Button>
               </div>
             ))}
           </CardContent>
@@ -194,8 +237,10 @@ export default function WorkerDashboardPage() {
       )}
 
       {/* All Assigned Agreements */}
-      <div className="space-y-4">
-        <h2 className="text-base font-bold text-zinc-100">Assigned Agreements ({agreements.length})</h2>
+      <div className="space-y-3">
+        <h2 className="text-sm font-bold text-zinc-200 uppercase tracking-wider">
+          Assigned Agreements ({agreements.length})
+        </h2>
 
         {isLoading ? (
           <div className="p-6 text-center text-xs text-zinc-400">Loading assignments...</div>
@@ -223,7 +268,7 @@ export default function WorkerDashboardPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 pt-2 sm:pt-0 border-zinc-800">
+                <div className="flex items-center justify-between sm:justify-end gap-3 border-t sm:border-t-0 pt-2 sm:pt-0 border-zinc-800">
                   <div className="text-right">
                     <span className="text-sm font-bold text-emerald-400 block">
                       ${formatUsdc(agreement.totalAmountUsdc)} USDC
@@ -233,7 +278,7 @@ export default function WorkerDashboardPage() {
 
                   <Link href={`/agreements/${agreement.publicKey}`}>
                     <Button variant="secondary" size="sm">
-                      Inspect
+                      Console
                       <ChevronRight className="w-3.5 h-3.5 ml-1" />
                     </Button>
                   </Link>
