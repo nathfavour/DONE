@@ -16,7 +16,8 @@ export interface WalletContextType {
   cluster: string;
   currentSlot: number;
   rpcLatencyMs: number;
-  connect: (preferred?: 'phantom' | 'solflare' | 'keypair' | 'custom', customAddr?: string) => Promise<void>;
+  connectError: string | null;
+  connect: (preferred: 'phantom' | 'solflare' | 'custom', customAddr?: string) => Promise<boolean>;
   disconnect: () => void;
   importAddress: (address: string) => boolean;
   requestDevnetSolAirdrop: () => Promise<boolean>;
@@ -24,20 +25,47 @@ export interface WalletContextType {
   deductUsdc: (amount: number) => void;
   creditUsdc: (amount: number) => void;
   refreshBalances: () => Promise<void>;
+  clearError: () => void;
 }
 
 const WalletContext = createContext<WalletContextType | null>(null);
 
-const STORAGE_CONNECTED = 'done_wallet_connected';
-const STORAGE_LIVE_KEYPAIR = 'done_wallet_live_keypair';
-const STORAGE_CUSTOM_ADDRESS = 'done_wallet_custom_address';
-const STORAGE_USDC_BALANCE = 'done_wallet_usdc_balance_live';
+const STORAGE_CONNECTED = 'done_wallet_connected_v3';
+const STORAGE_CUSTOM_ADDRESS = 'done_wallet_custom_address_v3';
+const STORAGE_WALLET_NAME = 'done_wallet_name_v3';
+const STORAGE_USDC_BALANCE = 'done_wallet_usdc_balance_v3';
+
+// Unconditionally purge any legacy fallback or demo wallet addresses from browser storage
+if (typeof window !== 'undefined') {
+  try {
+    // Clear out old keys that stored fallback addresses
+    localStorage.removeItem('done_wallet_connected');
+    localStorage.removeItem('done_wallet_live_keypair');
+    localStorage.removeItem('done_wallet_custom_address');
+    localStorage.removeItem('done_wallet_name');
+    localStorage.removeItem('done_wallet_usdc_balance_live');
+  } catch {
+    // ignore
+  }
+}
 
 export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [isConnecting, setIsConnecting] = useState<boolean>(false);
-  const [walletName, setWalletName] = useState<string>('');
+  const [connectError, setConnectError] = useState<string | null>(null);
+  const [walletName, setWalletName] = useState<string>(() => {
+    if (typeof window === 'undefined') return '';
+    return localStorage.getItem(STORAGE_WALLET_NAME) || '';
+  });
   const [isLiveExtension, setIsLiveExtension] = useState<boolean>(false);
   const [solBalance, setSolBalance] = useState<number>(0);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('done_wallet_live_keypair');
+      localStorage.removeItem('done_wallet_custom_address');
+      localStorage.removeItem('done_wallet_connected');
+    }
+  }, []);
 
   const [connected, setConnected] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
@@ -52,12 +80,6 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     try {
       const customAddr = localStorage.getItem(STORAGE_CUSTOM_ADDRESS);
       if (customAddr) return new PublicKey(customAddr);
-
-      const saved = localStorage.getItem(STORAGE_LIVE_KEYPAIR);
-      if (saved) {
-        const secret = Uint8Array.from(JSON.parse(saved));
-        return Keypair.fromSecretKey(secret).publicKey;
-      }
       return null;
     } catch {
       return null;
@@ -116,77 +138,85 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     };
   }, [connected, publicKey]);
 
-  // Connect to real on-chain wallet
-  const connect = useCallback(async (preferred?: 'phantom' | 'solflare' | 'keypair' | 'custom', customAddr?: string) => {
+  const clearError = useCallback(() => {
+    setConnectError(null);
+  }, []);
+
+  // Connect to real on-chain wallet only - NO fallback keypair generation
+  const connect = useCallback(async (preferred: 'phantom' | 'solflare' | 'custom', customAddr?: string): Promise<boolean> => {
     setIsConnecting(true);
+    setConnectError(null);
     try {
-      if (preferred === 'custom' && customAddr) {
-        const pk = new PublicKey(customAddr.trim());
-        setPublicKey(pk);
-        setWalletName('Imported Address');
-        setIsLiveExtension(false);
-        setConnected(true);
-        if (typeof window !== 'undefined') {
-          localStorage.setItem(STORAGE_CUSTOM_ADDRESS, pk.toBase58());
-          localStorage.setItem(STORAGE_CONNECTED, 'true');
+      if (preferred === 'custom') {
+        if (!customAddr || !customAddr.trim()) {
+          setConnectError('Please enter a valid Solana address');
+          return false;
         }
-        return;
+        try {
+          const pk = new PublicKey(customAddr.trim());
+          setPublicKey(pk);
+          setWalletName('Imported Address');
+          setIsLiveExtension(false);
+          setConnected(true);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(STORAGE_CUSTOM_ADDRESS, pk.toBase58());
+            localStorage.setItem(STORAGE_WALLET_NAME, 'Imported Address');
+            localStorage.setItem(STORAGE_CONNECTED, 'true');
+          }
+          return true;
+        } catch {
+          setConnectError('Invalid Solana base58 address');
+          return false;
+        }
       }
 
-      const solanaProvider = typeof window !== 'undefined' ? (window as unknown as { solana?: { isPhantom?: boolean; connect: () => Promise<{ publicKey: { toString: () => string } }> } }).solana : undefined;
-      const solflareProvider = typeof window !== 'undefined' ? (window as unknown as { solflare?: { connect: () => Promise<void>; publicKey: { toString: () => string } } }).solflare : undefined;
-      
-      if ((preferred === 'phantom' || !preferred) && solanaProvider && typeof solanaProvider.connect === 'function') {
-        const resp = await solanaProvider.connect();
-        const pk = new PublicKey(resp.publicKey.toString());
-        setPublicKey(pk);
-        setWalletName(solanaProvider.isPhantom ? 'Phantom' : 'Solana Wallet');
-        setIsLiveExtension(true);
-        setConnected(true);
-        if (typeof window !== 'undefined') localStorage.setItem(STORAGE_CONNECTED, 'true');
-        return;
-      }
-
-      if (preferred === 'solflare' && solflareProvider && typeof solflareProvider.connect === 'function') {
-        await solflareProvider.connect();
-        const pk = new PublicKey(solflareProvider.publicKey.toString());
-        setPublicKey(pk);
-        setWalletName('Solflare');
-        setIsLiveExtension(true);
-        setConnected(true);
-        if (typeof window !== 'undefined') localStorage.setItem(STORAGE_CONNECTED, 'true');
-        return;
-      }
-
-      // Default or 'keypair': Devnet session keypair
-      if (typeof window !== 'undefined') {
-        const saved = localStorage.getItem(STORAGE_LIVE_KEYPAIR);
-        let pk: PublicKey;
-        if (saved) {
-          const secret = Uint8Array.from(JSON.parse(saved));
-          pk = Keypair.fromSecretKey(secret).publicKey;
+      if (preferred === 'phantom') {
+        const solanaProvider = typeof window !== 'undefined' ? (window as unknown as { solana?: { isPhantom?: boolean; connect: () => Promise<{ publicKey: { toString: () => string } }> } }).solana : undefined;
+        if (solanaProvider && typeof solanaProvider.connect === 'function') {
+          const resp = await solanaProvider.connect();
+          const pk = new PublicKey(resp.publicKey.toString());
+          setPublicKey(pk);
+          setWalletName(solanaProvider.isPhantom ? 'Phantom' : 'Solana Wallet');
+          setIsLiveExtension(true);
+          setConnected(true);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(STORAGE_CUSTOM_ADDRESS, pk.toBase58());
+            localStorage.setItem(STORAGE_WALLET_NAME, solanaProvider.isPhantom ? 'Phantom' : 'Solana Wallet');
+            localStorage.setItem(STORAGE_CONNECTED, 'true');
+          }
+          return true;
         } else {
-          const kp = Keypair.generate();
-          localStorage.setItem(STORAGE_LIVE_KEYPAIR, JSON.stringify(Array.from(kp.secretKey)));
-          pk = kp.publicKey;
-        }
-        setPublicKey(pk);
-        setWalletName('Devnet Keypair');
-        setIsLiveExtension(false);
-        setConnected(true);
-        localStorage.setItem(STORAGE_CONNECTED, 'true');
-
-        const savedUsdc = localStorage.getItem(STORAGE_USDC_BALANCE);
-        if (savedUsdc) {
-          setUsdcBalance(Number(savedUsdc));
-        } else {
-          // Initialize test USDC when first connecting keypair
-          setUsdcBalance(10_000_000_000);
-          localStorage.setItem(STORAGE_USDC_BALANCE, '10000000000');
+          setConnectError('Phantom wallet extension is not installed in your browser. Install Phantom from phantom.app or import your address.');
+          return false;
         }
       }
-    } catch (err) {
-      console.warn('Wallet connection error:', err);
+
+      if (preferred === 'solflare') {
+        const solflareProvider = typeof window !== 'undefined' ? (window as unknown as { solflare?: { connect: () => Promise<void>; publicKey: { toString: () => string } } }).solflare : undefined;
+        if (solflareProvider && typeof solflareProvider.connect === 'function') {
+          await solflareProvider.connect();
+          const pk = new PublicKey(solflareProvider.publicKey.toString());
+          setPublicKey(pk);
+          setWalletName('Solflare');
+          setIsLiveExtension(true);
+          setConnected(true);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(STORAGE_CUSTOM_ADDRESS, pk.toBase58());
+            localStorage.setItem(STORAGE_WALLET_NAME, 'Solflare');
+            localStorage.setItem(STORAGE_CONNECTED, 'true');
+          }
+          return true;
+        } else {
+          setConnectError('Solflare wallet extension is not installed in your browser. Install Solflare from solflare.com or import your address.');
+          return false;
+        }
+      }
+
+      return false;
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Wallet connection rejected';
+      setConnectError(msg);
+      return false;
     } finally {
       setIsConnecting(false);
     }
@@ -199,8 +229,12 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     setSolBalance(0);
     setUsdcBalance(0);
     setIsLiveExtension(false);
+    setConnectError(null);
     if (typeof window !== 'undefined') {
       localStorage.setItem(STORAGE_CONNECTED, 'false');
+      localStorage.removeItem(STORAGE_CUSTOM_ADDRESS);
+      localStorage.removeItem(STORAGE_WALLET_NAME);
+      localStorage.removeItem('done_wallet_live_keypair');
     }
   }, []);
 
@@ -208,10 +242,11 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     try {
       const pk = new PublicKey(address.trim());
       setPublicKey(pk);
-      setWalletName('Live Solana Address');
+      setWalletName('Imported Address');
       setConnected(true);
       if (typeof window !== 'undefined') {
         localStorage.setItem(STORAGE_CUSTOM_ADDRESS, pk.toBase58());
+        localStorage.setItem(STORAGE_WALLET_NAME, 'Imported Address');
         localStorage.setItem(STORAGE_CONNECTED, 'true');
       }
       return true;
@@ -301,6 +336,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         cluster,
         currentSlot,
         rpcLatencyMs,
+        connectError,
         connect,
         disconnect,
         importAddress,
@@ -309,6 +345,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         deductUsdc,
         creditUsdc,
         refreshBalances,
+        clearError,
       }}
     >
       {children}

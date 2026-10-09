@@ -15,8 +15,10 @@ export function WalletConnectButton() {
     walletName,
     usdcBalance,
     solBalance,
+    connectError,
     connect,
     disconnect,
+    clearError,
     requestDevnetUsdcFaucet,
     requestDevnetSolAirdrop,
     refreshBalances,
@@ -29,6 +31,9 @@ export function WalletConnectButton() {
   const [copied, setCopied] = useState(false);
   const [isAirdropping, setIsAirdropping] = useState(false);
   const [faucetSuccess, setFaucetSuccess] = useState(false);
+
+  const hasPhantom = typeof window !== 'undefined' && Boolean((window as unknown as { solana?: { isPhantom?: boolean } }).solana);
+  const hasSolflare = typeof window !== 'undefined' && Boolean((window as unknown as { solflare?: { isSolflare?: boolean } }).solflare);
 
   const handleCopy = () => {
     if (!publicKeyString) return;
@@ -49,15 +54,22 @@ export function WalletConnectButton() {
     setTimeout(() => setFaucetSuccess(false), 2000);
   };
 
-  const handleConnectOption = async (option: 'phantom' | 'solflare' | 'keypair' | 'custom') => {
+  const handleConnectOption = async (option: 'phantom' | 'solflare' | 'custom') => {
+    clearError();
     if (option === 'custom') {
       if (!importAddrInput.trim()) return;
-      await connect('custom', importAddrInput.trim());
+      const success = await connect('custom', importAddrInput.trim());
+      if (success) {
+        setIsConnectModalOpen(false);
+        setShowImportField(false);
+      }
     } else {
-      await connect(option);
+      const success = await connect(option);
+      if (success) {
+        setIsConnectModalOpen(false);
+        setShowImportField(false);
+      }
     }
-    setIsConnectModalOpen(false);
-    setShowImportField(false);
   };
 
   if (!connected) {
@@ -67,7 +79,10 @@ export function WalletConnectButton() {
           variant="primary"
           size="sm"
           isLoading={isConnecting}
-          onClick={() => setIsConnectModalOpen(true)}
+          onClick={() => {
+            clearError();
+            setIsConnectModalOpen(true);
+          }}
           className="flex items-center gap-2"
         >
           <Wallet className="w-3.5 h-3.5" />
@@ -83,7 +98,7 @@ export function WalletConnectButton() {
                   <DoneLogo className="w-6 h-6" />
                   <div>
                     <h3 className="font-bold text-sm text-white">Connect Solana Wallet</h3>
-                    <p className="text-[11px] text-neutral-400">Select a provider to interact with DONE Escrow</p>
+                    <p className="text-[11px] text-neutral-400">Select a real Solana provider</p>
                   </div>
                 </div>
                 <button
@@ -93,6 +108,13 @@ export function WalletConnectButton() {
                   ✕
                 </button>
               </div>
+
+              {connectError && (
+                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex flex-col gap-1">
+                  <span className="font-bold">Connection Failed:</span>
+                  <span>{connectError}</span>
+                </div>
+              )}
 
               <div className="space-y-2">
                 {/* Phantom */}
@@ -106,11 +128,18 @@ export function WalletConnectButton() {
                       PH
                     </div>
                     <div className="text-left">
-                      <span className="font-semibold text-white block group-hover:text-violet-300">
-                        Phantom Wallet
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-white group-hover:text-violet-300">
+                          Phantom Wallet
+                        </span>
+                        {hasPhantom && (
+                          <span className="text-[9px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.2 rounded font-bold">
+                            Detected
+                          </span>
+                        )}
+                      </div>
                       <span className="text-[10px] text-neutral-400">
-                        Browser extension or mobile adapter
+                        Browser extension or mobile Solana wallet
                       </span>
                     </div>
                   </div>
@@ -130,39 +159,22 @@ export function WalletConnectButton() {
                       SF
                     </div>
                     <div className="text-left">
-                      <span className="font-semibold text-white block group-hover:text-amber-300">
-                        Solflare Wallet
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-white group-hover:text-amber-300">
+                          Solflare Wallet
+                        </span>
+                        {hasSolflare && (
+                          <span className="text-[9px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.2 rounded font-bold">
+                            Detected
+                          </span>
+                        )}
+                      </div>
                       <span className="text-[10px] text-neutral-400">
                         Solana native web & extension wallet
                       </span>
                     </div>
                   </div>
                   <span className="text-[10px] text-amber-400 group-hover:translate-x-0.5 transition-transform">
-                    Connect →
-                  </span>
-                </button>
-
-                {/* Devnet Session Keypair */}
-                <button
-                  type="button"
-                  onClick={() => handleConnectOption('keypair')}
-                  className="w-full p-3.5 bg-[#000000] hover:bg-neutral-950 border border-[#26262a] hover:border-violet-500/50 rounded-xl flex items-center justify-between transition-all group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold text-xs">
-                      DEV
-                    </div>
-                    <div className="text-left">
-                      <span className="font-semibold text-white block group-hover:text-emerald-300">
-                        Devnet Test Keypair
-                      </span>
-                      <span className="text-[10px] text-neutral-400">
-                        Instant session keypair with Solana Devnet access
-                      </span>
-                    </div>
-                  </div>
-                  <span className="text-[10px] text-emerald-400 group-hover:translate-x-0.5 transition-transform">
                     Connect →
                   </span>
                 </button>
@@ -175,18 +187,18 @@ export function WalletConnectButton() {
                       onClick={() => setShowImportField(true)}
                       className="text-[11px] text-neutral-400 hover:text-violet-300 underline py-1 block"
                     >
-                      Or import custom Solana address...
+                      Or connect custom Solana public address...
                     </button>
                   ) : (
                     <div className="p-3 bg-[#000000] border border-[#26262a] rounded-xl space-y-2">
                       <label className="text-[10px] uppercase font-bold text-neutral-400 block">
-                        Solana Base58 Address
+                        Solana Base58 Public Key
                       </label>
                       <input
                         type="text"
                         value={importAddrInput}
                         onChange={(e) => setImportAddrInput(e.target.value)}
-                        placeholder="e.g. 7vW...4rT"
+                        placeholder="Paste your 32-44 char Solana public key..."
                         className="w-full bg-[#000000] border border-[#26262a] rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-violet-500"
                       />
                       <div className="flex justify-end gap-2 pt-1">
@@ -203,7 +215,7 @@ export function WalletConnectButton() {
                           disabled={!importAddrInput.trim()}
                           className="px-3 py-1 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white rounded-lg text-[11px] font-semibold"
                         >
-                          Import & Connect
+                          Connect Address
                         </button>
                       </div>
                     </div>

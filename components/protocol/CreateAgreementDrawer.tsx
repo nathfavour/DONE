@@ -99,13 +99,17 @@ export function CreateAgreementDrawer({ isOpen, onClose, onSuccess }: CreateAgre
     try {
       if (workerAddress.trim()) {
         workerPubkey = new PublicKey(workerAddress.trim());
-      } else if (publicKey) {
-        workerPubkey = publicKey;
       } else {
-        workerPubkey = new PublicKey('11111111111111111111111111111111');
+        setError('Worker Solana address is required');
+        return;
       }
     } catch {
       setError('Invalid Worker Solana address format');
+      return;
+    }
+
+    if (!publicKey) {
+      setError('Please connect your sponsor wallet to initialize this agreement');
       return;
     }
 
@@ -113,7 +117,7 @@ export function CreateAgreementDrawer({ isOpen, onClose, onSuccess }: CreateAgre
     try {
       const termsHash = await hashAgreementTerms(termsText);
       const { agreementPda } = await protocolClient.createAgreement({
-        sponsor: publicKey || undefined,
+        sponsor: publicKey,
         worker: workerPubkey,
         termsHash,
         milestoneCount: milestones.length,

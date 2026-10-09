@@ -51,13 +51,17 @@ export default function CreateAgreementPage() {
     try {
       if (workerAddress.trim()) {
         workerPubkey = new PublicKey(workerAddress.trim());
-      } else if (publicKey) {
-        workerPubkey = publicKey;
       } else {
-        workerPubkey = new PublicKey('11111111111111111111111111111111');
+        setError('Worker Solana address is required');
+        return;
       }
     } catch {
       setError('Invalid Worker Solana address');
+      return;
+    }
+
+    if (!publicKey) {
+      setError('Please connect your sponsor wallet to initialize this agreement');
       return;
     }
 
@@ -65,7 +69,7 @@ export default function CreateAgreementPage() {
       await execute('createAgreement', 'Deploy Escrow and Derive Vault PDA', async () => {
         const termsHash = await hashAgreementTerms(termsText);
         const { signature, agreementPda } = await protocolClient.createAgreement({
-          sponsor: publicKey || undefined,
+          sponsor: publicKey,
           worker: workerPubkey,
           termsHash,
           milestoneCount: milestones.length,

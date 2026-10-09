@@ -141,7 +141,7 @@ class ProtocolClient implements DoneProtocolProgram {
    * Instruction: createAgreement
    */
   public async createAgreement(params: {
-    sponsor?: PublicKey;
+    sponsor: PublicKey;
     worker: PublicKey;
     termsHash: Uint8Array;
     milestoneCount: number;
@@ -149,8 +149,11 @@ class ProtocolClient implements DoneProtocolProgram {
     description: string;
     termsText: string;
   }): Promise<{ signature: string; agreementPda: PublicKey }> {
+    if (!params.sponsor) {
+      throw new Error('Sponsor wallet is required to initialize agreement');
+    }
     const agreements = this.loadAgreements();
-    const sponsorKey = params.sponsor || Keypair.generate().publicKey;
+    const sponsorKey = params.sponsor;
     const nonce = Date.now();
     const [agreementPda, bump] = getAgreementPda(sponsorKey, nonce);
     const [vaultPda] = getVaultPda(agreementPda);

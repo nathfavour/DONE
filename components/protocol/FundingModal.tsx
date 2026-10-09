@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { AgreementAccount } from '@/types/protocol';
-import { formatUsdc, truncateAddress } from '@/lib/solana';
+import { formatUsdc, truncateAddress, DONE_PROGRAM_ID } from '@/lib/solana';
 import { protocolClient } from '@/lib/protocol/client';
 import { useWallet } from '../web3/WalletContext';
 import { Button } from '../ui/Button';
@@ -106,7 +106,7 @@ export function FundingModal({ agreement, isOpen, onClose, onExecute }: FundingM
         )}
 
         <div className="text-[11px] text-neutral-400 space-y-1">
-          <p>• Vault funds are held by Anchor Program ID {truncateAddress('DoneProt11111111111111111111111111111111111', 4)}.</p>
+          <p>• Vault funds are held by Anchor Program ID {truncateAddress(DONE_PROGRAM_ID.toBase58(), 4)}.</p>
           <p>• Funds can ONLY be released once Definition of Done criteria are verified.</p>
         </div>
 
