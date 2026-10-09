@@ -2,44 +2,56 @@ import React from 'react';
 
 export function DoneLogo({ className = 'w-7 h-7' }: { className?: string }) {
   return (
-    <div className={`relative flex items-center justify-center ${className}`}>
+    <div className={`relative flex items-center justify-center shrink-0 ${className}`}>
       <svg
-        viewBox="0 0 40 40"
+        viewBox="0 0 44 44"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className="w-full h-full drop-shadow-[0_0_10px_rgba(6,182,212,0.5)]"
+        className="w-full h-full drop-shadow-[0_0_12px_rgba(34,211,238,0.35)]"
       >
-        {/* Hexagonal outer shield */}
+        <rect
+          x="3"
+          y="3"
+          width="38"
+          height="38"
+          rx="10"
+          className="fill-[#0d0d0f] stroke-[#26262a]"
+          strokeWidth="1.5"
+        />
+        
+        {/* Subtle geometric grid accents */}
+        <line x1="3" y1="22" x2="41" y2="22" stroke="#1f1f23" strokeWidth="1" strokeDasharray="2 3" />
+        <line x1="22" y1="3" x2="22" y2="41" stroke="#1f1f23" strokeWidth="1" strokeDasharray="2 3" />
+
+        {/* Outer subtle shield bevel */}
         <polygon
-          points="20,2 36,11 36,29 20,38 4,29 4,11"
-          stroke="url(#doneGradient)"
-          strokeWidth="2.5"
-          strokeLinejoin="round"
-          className="fill-zinc-950/80"
+          points="22,7 35,14.5 35,29.5 22,37 9,29.5 9,14.5"
+          fill="rgba(20,20,22,0.8)"
+          stroke="url(#shieldEdgeGrad)"
+          strokeWidth="1.2"
         />
-        {/* Internal architectural lines */}
+
+        {/* Dynamic Settled Slash & Check */}
         <path
-          d="M20 2V38M4 11L36 29M4 29L36 11"
-          stroke="rgba(6,182,212,0.15)"
-          strokeWidth="1"
-        />
-        {/* Glowing Settlement Checkmark */}
-        <path
-          d="M12 20.5L17.5 26L28.5 14.5"
-          stroke="url(#checkGradient)"
+          d="M13 22.5L19.5 29L32 15"
+          stroke="url(#doneNeonGrad)"
           strokeWidth="3.5"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
+
+        {/* Center luminous pip */}
+        <circle cx="19.5" cy="29" r="1.5" fill="#a7f3d0" />
+
         <defs>
-          <linearGradient id="doneGradient" x1="4" y1="2" x2="36" y2="38" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#06b6d4" />
-            <stop offset="0.5" stopColor="#3b82f6" />
-            <stop offset="1" stopColor="#10b981" />
-          </linearGradient>
-          <linearGradient id="checkGradient" x1="12" y1="14.5" x2="28.5" y2="26" gradientUnits="userSpaceOnUse">
+          <linearGradient id="doneNeonGrad" x1="12" y1="14" x2="33" y2="30" gradientUnits="userSpaceOnUse">
             <stop stopColor="#22d3ee" />
+            <stop offset="0.6" stopColor="#38bdf8" />
             <stop offset="1" stopColor="#34d399" />
+          </linearGradient>
+          <linearGradient id="shieldEdgeGrad" x1="9" y1="7" x2="35" y2="37" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#38bdf8" stopOpacity="0.6" />
+            <stop offset="1" stopColor="#10b981" stopOpacity="0.2" />
           </linearGradient>
         </defs>
       </svg>

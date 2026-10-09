@@ -3,62 +3,65 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useAgreements } from '@/hooks/useAgreement';
-import { useWallet } from '@/components/web3/WalletContext';
+import { useWallet, WalletRole } from '@/components/web3/WalletContext';
 import { useTransactionExecution } from '@/hooks/useTransactionExecution';
 import { AgreementAccount, AgreementState, MilestoneAccount, MilestoneState } from '@/types/protocol';
 import { formatUsdc, truncateAddress, getExplorerUrl } from '@/lib/solana';
 import { protocolClient } from '@/lib/protocol/client';
-import { useQueryClient } from '@tanstack/react-query';
-import { MilestoneStateBadge } from '@/components/ui/Badge';
+import { AgreementStateBadge, MilestoneStateBadge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 import { TxStateModal } from '@/components/web3/TxStateModal';
 import { QuickActionModal, QuickActionType } from '@/components/protocol/QuickActionModal';
-import { DoneLogo } from '@/components/protocol/DoneLogo';
 import {
-  PlusCircle,
-  Coins,
-  ShieldCheck,
-  UploadCloud,
-  FileCheck,
-  RefreshCw,
-  ExternalLink,
-  ChevronRight,
-  Play,
-  Layers,
-  ArrowRight,
+  Lock,
   TrendingUp,
   Cpu,
-  Lock,
-  Sparkles,
+  PlusCircle,
+  ExternalLink,
+  ShieldCheck,
+  UploadCloud,
+  Coins,
+  ChevronRight,
+  Play,
+  RotateCcw,
+  SlidersHorizontal,
+  CheckCircle2,
+  FileCode,
+  ArrowRight,
+  Activity,
+  Layers,
 } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { AGREEMENTS_QUERY_KEY } from '@/hooks/useAgreement';
 
-export default function AppWorkspacePage() {
+export default function OverviewCommandPage() {
   const { data: agreements = [], isLoading } = useAgreements();
-  const { publicKeyString, role, switchRole, usdcBalance, requestDevnetUsdcFaucet } = useWallet();
+  const { publicKeyString, role, switchRole, usdcBalance, currentSlot, rpcLatencyMs } = useWallet();
   const { txState, execute, reset: resetTx, isOpen: isTxOpen } = useTransactionExecution();
   const queryClient = useQueryClient();
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isResetting, setIsResetting] = useState(false);
+  // Active filter tab
+  const [activeTab, setActiveTab] = useState<'all' | 'needs_funding' | 'needs_evidence' | 'needs_verify' | 'ready_settle'>('all');
 
-  // Quick Action Modal state
-  const [modalState, setModalState] = useState<{
+  // Contextual inspection and action drawer
+  const [drawerState, setDrawerState] = useState<{
     isOpen: boolean;
     type: QuickActionType;
     agreement: AgreementAccount | null;
     milestone?: MilestoneAccount;
   }>({
     isOpen: false,
-    type: 'submit_evidence',
+    type: 'inspect',
     agreement: null,
   });
 
-  const openAction = (
+  const openDrawer = (
     type: QuickActionType,
     agreement: AgreementAccount,
     milestone?: MilestoneAccount
   ) => {
-    setModalState({
+    setDrawerState({
       isOpen: true,
       type,
       agreement,
@@ -66,19 +69,19 @@ export default function AppWorkspacePage() {
     });
   };
 
-  const closeAction = () => {
-    setModalState((prev) => ({ ...prev, isOpen: false }));
+  const closeDrawer = () => {
+    setDrawerState((prev) => ({ ...prev, isOpen: false }));
   };
 
   // Metrics
-  const totalVaultTvl = agreements.reduce((acc, a) => {
+  const totalEscrowed = agreements.reduce((acc, a) => {
     const released = a.milestones
       .filter((m) => m.state === MilestoneState.RELEASED)
-      .reduce((s, m) => s + m.amountUsdc, 0);
+      .reduce((sum, m) => sum + m.amountUsdc, 0);
     return acc + (a.state !== AgreementState.DRAFT ? a.totalAmountUsdc - released : 0);
   }, 0);
 
-  const totalSettledUsdc = agreements.reduce((acc, a) => {
+  const totalSettled = agreements.reduce((acc, a) => {
     return (
       acc +
       a.milestones
@@ -87,558 +90,474 @@ export default function AppWorkspacePage() {
     );
   }, 0);
 
-  // Gather all milestones flattened with parent agreement for the Kanban pipeline
-  const allMilestoneItems = agreements.flatMap((a) =>
-    a.milestones.map((m) => ({
-      agreement: a,
-      milestone: m,
-    }))
-  );
-
-  const filteredItems = allMilestoneItems.filter(({ agreement, milestone }) => {
-    if (!searchQuery) return true;
-    const q = searchQuery.toLowerCase();
+  const activeInFlightMilestones = agreements.reduce((acc, a) => {
     return (
-      agreement.title.toLowerCase().includes(q) ||
-      milestone.title.toLowerCase().includes(q) ||
-      agreement.publicKey.toLowerCase().includes(q)
+      acc +
+      a.milestones.filter(
+        (m) =>
+          m.state === MilestoneState.PENDING ||
+          m.state === MilestoneState.EVIDENCE_SUBMITTED ||
+          m.state === MilestoneState.VERIFIED
+      ).length
     );
+  }, 0);
+
+  // Filtered agreements based on state
+  const filteredAgreements = agreements.filter((a) => {
+    if (activeTab === 'needs_funding') return a.state === AgreementState.DRAFT;
+    if (activeTab === 'needs_evidence')
+      return a.milestones.some((m) => m.state === MilestoneState.PENDING);
+    if (activeTab === 'needs_verify')
+      return a.milestones.some((m) => m.state === MilestoneState.EVIDENCE_SUBMITTED);
+    if (activeTab === 'ready_settle')
+      return a.milestones.some((m) => m.state === MilestoneState.VERIFIED);
+    return true;
   });
 
-  // Kanban Columns
-  const colPending = filteredItems.filter(({ milestone }) => milestone.state === MilestoneState.PENDING);
-  const colEvidence = filteredItems.filter(
-    ({ milestone }) => milestone.state === MilestoneState.EVIDENCE_SUBMITTED
-  );
-  const colVerified = filteredItems.filter(({ milestone }) => milestone.state === MilestoneState.VERIFIED);
-  const colReleased = filteredItems.filter(({ milestone }) => milestone.state === MilestoneState.RELEASED);
+  // Recent activity ledger
+  const recentMilestones = agreements
+    .flatMap((a) =>
+      a.milestones.map((m) => ({
+        agreementId: a.publicKey,
+        agreementTitle: a.title,
+        workerKey: a.worker,
+        milestone: m,
+      }))
+    )
+    .sort((a, b) => (b.milestone.releasedAt || 0) - (a.milestone.releasedAt || 0));
 
-  const handleResetSandbox = async () => {
-    setIsResetting(true);
-    protocolClient.resetToDefaultSeed();
-    await queryClient.invalidateQueries();
-    setTimeout(() => setIsResetting(false), 400);
+  // Reset Demo State
+  const handleResetDemoState = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('done_protocol_agreements_v1');
+    }
+    queryClient.invalidateQueries({ queryKey: AGREEMENTS_QUERY_KEY });
+    window.location.reload();
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6 font-mono text-zinc-100">
-      <TxStateModal state={txState} isOpen={isTxOpen} onClose={resetTx} />
+    <div className="space-y-6 font-mono text-neutral-100">
+      {/* 1. INTERACTIVE DEMO CONTROL CENTER / HUD */}
+      <section className="bg-[#0d0d0f] border border-[#26262a] rounded-2xl p-4 sm:p-5 space-y-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-[#26262a] pb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-[#141416] border border-[#26262a] flex items-center justify-center text-cyan-400">
+              <Layers className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-bold text-white tracking-wide uppercase">
+                  Protocol Settlement Engine
+                </span>
+                <span className="px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold">
+                  LIVE INTERFACE
+                </span>
+              </div>
+              <p className="text-xs text-neutral-400 mt-0.5">
+                Deterministic escrow on Solana: Definition of Done $\rightarrow$ Evidence $\rightarrow$ Verification $\rightarrow$ Settlement.
+              </p>
+            </div>
+          </div>
 
-      {modalState.agreement && (
+          {/* Quick Role Switcher Buttons */}
+          <div className="flex items-center gap-1.5 bg-[#141416] border border-[#202024] p-1.5 rounded-xl">
+            <span className="text-[11px] text-neutral-400 px-2 font-semibold hidden sm:inline">ACT AS:</span>
+            {(['sponsor', 'worker', 'oracle'] as WalletRole[]).map((r) => {
+              const isActive = role === r;
+              return (
+                <button
+                  key={r}
+                  onClick={() => switchRole(r)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold uppercase transition-all ${
+                    isActive
+                      ? r === 'sponsor'
+                        ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+                        : r === 'worker'
+                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                        : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                      : 'text-neutral-400 hover:text-white hover:bg-[#1a1a1e]'
+                  }`}
+                >
+                  {r === 'oracle' ? 'Verifier' : r}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Quick Demo Workflow Action Row */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+          <div className="flex items-center gap-2 text-xs text-neutral-300">
+            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+            <span className="text-neutral-400">Target Role:</span>
+            <span className="font-bold text-white uppercase">{role}</span>
+            <span className="text-neutral-500">|</span>
+            <span className="text-neutral-400">Balance:</span>
+            <span className="text-emerald-400 font-bold">${formatUsdc(usdcBalance)} USDC</span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <Link href="/agreements/new">
+              <Button variant="primary" size="sm">
+                <PlusCircle className="w-4 h-4 mr-1.5" />
+                Create Agreement
+              </Button>
+            </Link>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleResetDemoState}
+              className="text-neutral-300 hover:text-white border-[#26262a]"
+              title="Reset sample agreements and local demo state"
+            >
+              <RotateCcw className="w-3.5 h-3.5 mr-1 text-neutral-400" />
+              Reset Demo
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* 2. REAL-TIME PROTOCOL METRICS ROW */}
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="bg-[#0d0d0f] border border-[#26262a] p-4 rounded-2xl flex flex-col justify-between">
+          <span className="text-[10px] text-neutral-400 uppercase tracking-wider font-semibold">
+            Escrow Locked
+          </span>
+          <div className="text-xl sm:text-2xl font-bold text-white mt-1">
+            ${formatUsdc(totalEscrowed)} <span className="text-xs text-neutral-400 font-normal">USDC</span>
+          </div>
+          <span className="text-[10px] text-neutral-500 mt-1">Held in Vault PDAs</span>
+        </div>
+
+        <div className="bg-[#0d0d0f] border border-[#26262a] p-4 rounded-2xl flex flex-col justify-between">
+          <span className="text-[10px] text-neutral-400 uppercase tracking-wider font-semibold">
+            Settled Payouts
+          </span>
+          <div className="text-xl sm:text-2xl font-bold text-emerald-400 mt-1">
+            ${formatUsdc(totalSettled)} <span className="text-xs text-neutral-400 font-normal">USDC</span>
+          </div>
+          <span className="text-[10px] text-neutral-500 mt-1">Disbursed to Worker ATAs</span>
+        </div>
+
+        <div className="bg-[#0d0d0f] border border-[#26262a] p-4 rounded-2xl flex flex-col justify-between">
+          <span className="text-[10px] text-neutral-400 uppercase tracking-wider font-semibold">
+            In-Flight Milestones
+          </span>
+          <div className="text-xl sm:text-2xl font-bold text-white mt-1">
+            {activeInFlightMilestones} <span className="text-xs text-neutral-400 font-normal">Active</span>
+          </div>
+          <span className="text-[10px] text-neutral-500 mt-1">Evidence & Verification</span>
+        </div>
+
+        <div className="bg-[#0d0d0f] border border-[#26262a] p-4 rounded-2xl flex flex-col justify-between">
+          <span className="text-[10px] text-neutral-400 uppercase tracking-wider font-semibold">
+            Solana Devnet
+          </span>
+          <div className="text-xl sm:text-2xl font-bold text-cyan-300 mt-1 truncate">
+            {rpcLatencyMs}ms
+          </div>
+          <span className="text-[10px] text-neutral-500 mt-1">Slot #{currentSlot.toLocaleString()}</span>
+        </div>
+      </section>
+
+      {/* 3. ACTIVE AGREEMENTS INTERACTIVE WORKSPACE */}
+      <section className="bg-[#0d0d0f] border border-[#26262a] rounded-2xl p-4 sm:p-5 space-y-4">
+        {/* Workspace Bar with Filters */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#26262a] pb-3">
+          <div className="flex items-center gap-2">
+            <FileCode className="w-4 h-4 text-cyan-400" />
+            <h2 className="text-sm font-bold text-white uppercase tracking-wider">
+              Protocol Agreements Workspace
+            </h2>
+            <span className="text-xs text-neutral-500">({filteredAgreements.length})</span>
+          </div>
+
+          {/* Quick Segment Filter */}
+          <div className="flex items-center overflow-x-auto no-scrollbar gap-1 bg-[#141416] p-1 rounded-xl border border-[#202024]">
+            {[
+              { id: 'all', label: 'All' },
+              { id: 'needs_funding', label: 'Needs Funding' },
+              { id: 'needs_evidence', label: 'Submit Proof' },
+              { id: 'needs_verify', label: 'Verify Audit' },
+              { id: 'ready_settle', label: 'Ready Disbursal' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`px-2.5 py-1 text-[11px] rounded-lg font-medium whitespace-nowrap transition-colors ${
+                  activeTab === tab.id
+                    ? 'bg-[#202024] text-white font-semibold'
+                    : 'text-neutral-400 hover:text-white'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Agreement Interactive Cards List */}
+        {isLoading ? (
+          <div className="py-12 text-center text-xs text-neutral-400">Loading protocol state...</div>
+        ) : filteredAgreements.length === 0 ? (
+          <div className="py-12 text-center text-xs text-neutral-500 space-y-2">
+            <p>No agreements match the selected pipeline filter.</p>
+            <Button variant="outline" size="sm" onClick={() => setActiveTab('all')}>
+              View All Agreements
+            </Button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4">
+            {filteredAgreements.map((agreement) => {
+              const settledAmount = agreement.milestones
+                .filter((m) => m.state === MilestoneState.RELEASED)
+                .reduce((sum, m) => sum + m.amountUsdc, 0);
+
+              return (
+                <div
+                  key={agreement.publicKey}
+                  className="bg-[#141416] border border-[#202024] hover:border-[#26262a] rounded-2xl p-4 sm:p-5 transition-all space-y-4"
+                >
+                  {/* Agreement Header */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#202024] pb-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Link
+                          href={`/agreements/${agreement.publicKey}`}
+                          className="font-bold text-sm sm:text-base text-white hover:text-cyan-300 transition-colors"
+                        >
+                          {agreement.title}
+                        </Link>
+                        <AgreementStateBadge state={agreement.state} />
+                      </div>
+                      <div className="flex items-center gap-3 text-[11px] text-neutral-400 font-mono">
+                        <span>Worker: {truncateAddress(agreement.worker, 4)}</span>
+                        <span>•</span>
+                        <span>Sponsor: {truncateAddress(agreement.sponsor, 4)}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 self-start sm:self-auto">
+                      <div className="text-right pr-2">
+                        <div className="text-sm font-bold text-emerald-400">
+                          ${formatUsdc(agreement.totalAmountUsdc)} USDC
+                        </div>
+                        <div className="text-[10px] text-neutral-400">
+                          ${formatUsdc(settledAmount)} Settled
+                        </div>
+                      </div>
+
+                      {/* Main Action on Agreement Level */}
+                      {agreement.state === AgreementState.DRAFT && (
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() => openDrawer('fund', agreement)}
+                          className="bg-emerald-400 hover:bg-emerald-300 text-black font-bold"
+                        >
+                          <Lock className="w-3.5 h-3.5 mr-1" />
+                          Fund Escrow
+                        </Button>
+                      )}
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openDrawer('inspect', agreement)}
+                        className="text-neutral-300 border-[#26262a]"
+                        title="Inspect on-chain PDAs and commitments"
+                      >
+                        Inspect
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Interactive Milestones Pipeline Track */}
+                  <div className="space-y-2">
+                    <span className="text-[10px] text-neutral-400 uppercase tracking-wider font-semibold block">
+                      Milestone Execution Track ({agreement.milestones.length})
+                    </span>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+                      {agreement.milestones.map((m) => (
+                        <div
+                          key={m.publicKey}
+                          className="bg-[#0d0d0f] border border-[#202024] rounded-xl p-3 flex flex-col justify-between space-y-2 hover:border-[#2a2a30] transition-colors"
+                        >
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between gap-1">
+                              <span className="text-[10px] font-bold text-neutral-400">#{m.index}</span>
+                              <MilestoneStateBadge state={m.state} />
+                            </div>
+                            <h4 className="text-xs font-semibold text-neutral-200 line-clamp-1">
+                              {m.title}
+                            </h4>
+                            <div className="text-xs font-bold text-emerald-400">
+                              ${formatUsdc(m.amountUsdc)} USDC
+                            </div>
+                          </div>
+
+                          {/* Action Button depending on milestone state */}
+                          <div className="pt-2 border-t border-[#1a1a1e] flex items-center justify-between gap-2">
+                            {m.state === MilestoneState.PENDING && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => openDrawer('submit_evidence', agreement, m)}
+                                className="w-full text-amber-300 border-amber-500/30 hover:bg-amber-500/10 text-[11px] py-1.5"
+                              >
+                                <UploadCloud className="w-3 h-3 mr-1" />
+                                Submit Proof
+                              </Button>
+                            )}
+
+                            {m.state === MilestoneState.EVIDENCE_SUBMITTED && (
+                              <Button
+                                variant="primary"
+                                size="sm"
+                                onClick={() => openDrawer('verify', agreement, m)}
+                                className="w-full bg-cyan-400 hover:bg-cyan-300 text-black font-semibold text-[11px] py-1.5"
+                              >
+                                <ShieldCheck className="w-3 h-3 mr-1" />
+                                Verify DoD
+                              </Button>
+                            )}
+
+                            {m.state === MilestoneState.VERIFIED && (
+                              <Button
+                                variant="primary"
+                                size="sm"
+                                onClick={() => openDrawer('release', agreement, m)}
+                                className="w-full bg-emerald-400 hover:bg-emerald-300 text-black font-semibold text-[11px] py-1.5"
+                              >
+                                <Coins className="w-3 h-3 mr-1" />
+                                Disburse USDC
+                              </Button>
+                            )}
+
+                            {m.state === MilestoneState.RELEASED && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => openDrawer('inspect', agreement, m)}
+                                className="w-full text-neutral-400 border-[#26262a] text-[11px] py-1.5"
+                              >
+                                <CheckCircle2 className="w-3 h-3 mr-1 text-emerald-400" />
+                                Settled • Inspect
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      {/* 4. RECENT VERIFIABLE ACTIVITY LEDGER */}
+      <section className="bg-[#0d0d0f] border border-[#26262a] rounded-2xl p-4 sm:p-5 space-y-4">
+        <div className="flex items-center justify-between border-b border-[#26262a] pb-3">
+          <div className="flex items-center gap-2">
+            <Activity className="w-4 h-4 text-emerald-400" />
+            <h2 className="text-sm font-bold text-white uppercase tracking-wider">
+              On-Chain Settlement Activity Feed
+            </h2>
+          </div>
+          <Link
+            href="/agreements"
+            className="text-xs text-neutral-400 hover:text-white inline-flex items-center gap-1 transition-colors"
+          >
+            <span>View Catalog</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
+        {recentMilestones.length === 0 ? (
+          <div className="py-6 text-center text-xs text-neutral-500">No protocol events recorded.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="border-b border-[#202024] text-neutral-400 uppercase text-[10px]">
+                  <th className="pb-2.5 font-semibold">Agreement & Milestone</th>
+                  <th className="pb-2.5 font-semibold">Worker</th>
+                  <th className="pb-2.5 font-semibold">Amount</th>
+                  <th className="pb-2.5 font-semibold">Status</th>
+                  <th className="pb-2.5 font-semibold text-right">Transaction</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#1a1a1e]">
+                {recentMilestones.slice(0, 5).map(({ agreementId, agreementTitle, workerKey, milestone }) => (
+                  <tr key={milestone.publicKey} className="hover:bg-[#141416]/50 transition-colors">
+                    <td className="py-2.5 pr-3">
+                      <Link
+                        href={`/agreements/${agreementId}`}
+                        className="font-semibold text-neutral-200 hover:text-cyan-300 block truncate max-w-xs"
+                      >
+                        {milestone.title}
+                      </Link>
+                      <span className="text-[10px] text-neutral-400 truncate block">
+                        {agreementTitle}
+                      </span>
+                    </td>
+                    <td className="py-2.5 pr-3 font-mono text-neutral-400">
+                      {truncateAddress(workerKey, 4)}
+                    </td>
+                    <td className="py-2.5 pr-3 font-bold text-emerald-400">
+                      ${formatUsdc(milestone.amountUsdc)} USDC
+                    </td>
+                    <td className="py-2.5 pr-3">
+                      <MilestoneStateBadge state={milestone.state} />
+                    </td>
+                    <td className="py-2.5 text-right font-mono">
+                      {milestone.settlementTx ? (
+                        <a
+                          href={getExplorerUrl(milestone.settlementTx, 'tx')}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-cyan-400 hover:underline inline-flex items-center gap-1 text-[11px]"
+                        >
+                          {truncateAddress(milestone.settlementTx, 4)}
+                          <ExternalLink className="w-2.5 h-2.5" />
+                        </a>
+                      ) : (
+                        <span className="text-neutral-600">—</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      {/* Slide-out Drawer for Inspections & Actions (NO MODALS!) */}
+      {drawerState.agreement && (
         <QuickActionModal
-          isOpen={modalState.isOpen}
-          onClose={closeAction}
-          actionType={modalState.type}
-          agreement={modalState.agreement}
-          milestone={modalState.milestone}
+          isOpen={drawerState.isOpen}
+          onClose={closeDrawer}
+          actionType={drawerState.type}
+          agreement={drawerState.agreement}
+          milestone={drawerState.milestone}
           onExecute={execute}
+          onSwitchAction={(nextType, nextM) => {
+            setDrawerState((prev) => ({
+              ...prev,
+              type: nextType,
+              milestone: nextM ?? prev.milestone,
+            }));
+          }}
         />
       )}
 
-      {/* Top Application Bar: Metrics & Fast Action Controls */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="p-3.5 bg-zinc-950 border border-zinc-800 flex items-center justify-between">
-          <div>
-            <span className="text-[10px] text-zinc-400 uppercase tracking-wider block">
-              ESCROW VAULTS TVL
-            </span>
-            <div className="text-lg sm:text-xl font-bold text-cyan-400 mt-0.5">
-              ${formatUsdc(totalVaultTvl)} <span className="text-xs text-zinc-400">USDC</span>
-            </div>
-          </div>
-          <Lock className="w-5 h-5 text-cyan-500/60" />
-        </div>
-
-        <div className="p-3.5 bg-zinc-950 border border-zinc-800 flex items-center justify-between">
-          <div>
-            <span className="text-[10px] text-zinc-400 uppercase tracking-wider block">
-              DISBURSED & SETTLED
-            </span>
-            <div className="text-lg sm:text-xl font-bold text-emerald-400 mt-0.5">
-              ${formatUsdc(totalSettledUsdc)} <span className="text-xs text-zinc-400">USDC</span>
-            </div>
-          </div>
-          <TrendingUp className="w-5 h-5 text-emerald-500/60" />
-        </div>
-
-        <div className="p-3.5 bg-zinc-950 border border-zinc-800 flex items-center justify-between">
-          <div>
-            <span className="text-[10px] text-zinc-400 uppercase tracking-wider block">
-              ACTIVE MILESTONES
-            </span>
-            <div className="text-lg sm:text-xl font-bold text-zinc-100 mt-0.5">
-              {colPending.length + colEvidence.length + colVerified.length}{' '}
-              <span className="text-xs text-zinc-400 font-normal">in flight</span>
-            </div>
-          </div>
-          <Cpu className="w-5 h-5 text-zinc-500" />
-        </div>
-
-        <div className="p-3.5 bg-zinc-950 border border-zinc-800 flex items-center justify-between">
-          <div>
-            <span className="text-[10px] text-zinc-400 uppercase tracking-wider block">
-              YOUR DEVNET WALLET
-            </span>
-            <div className="text-lg sm:text-xl font-bold text-emerald-300 mt-0.5">
-              ${formatUsdc(usdcBalance)} <span className="text-xs text-zinc-400">USDC</span>
-            </div>
-          </div>
-          <button
-            onClick={() => requestDevnetUsdcFaucet(5_000_000_000)}
-            title="Airdrop +5K USDC"
-            className="text-[10px] bg-zinc-900 hover:bg-zinc-800 text-cyan-300 px-2 py-1 border border-zinc-700"
-          >
-            +5K FAUCET
-          </button>
-        </div>
-      </div>
-
-      {/* Interactive 1-Click Demo Scenarios Strip */}
-      <div className="p-4 bg-zinc-950 border border-cyan-500/40 shadow-[0_0_20px_rgba(6,182,212,0.08)] space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-800/80 pb-2.5">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-            <span className="text-xs font-bold uppercase tracking-wider text-zinc-100 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-              Live Demo Sandbox Actions
-            </span>
-            <span className="text-[10px] bg-zinc-900 border border-zinc-700 text-zinc-400 px-1.5 py-0.5">
-              Click any scenario to execute live on Devnet
-            </span>
-          </div>
-
-          <button
-            onClick={handleResetSandbox}
-            disabled={isResetting}
-            className="text-[11px] text-zinc-400 hover:text-zinc-200 inline-flex items-center gap-1.5 px-2 py-1 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 self-start sm:self-auto"
-          >
-            <RefreshCw className={`w-3 h-3 ${isResetting ? 'animate-spin' : ''}`} />
-            Reset Sample Data
-          </button>
-        </div>
-
-        {/* 3 Instant Demo Scenario Shortcuts */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 text-xs">
-          {/* Scenario 1: Worker Submits Evidence */}
-          <div className="p-2.5 bg-zinc-900/80 border border-zinc-800 hover:border-amber-500/60 transition-colors flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5 text-amber-400 font-bold text-[11px]">
-                <UploadCloud className="w-3.5 h-3.5 flex-shrink-0" />
-                <span>Worker: Submit Evidence</span>
-              </div>
-              <p className="text-[11px] text-zinc-400 truncate mt-0.5">
-                Audit: Remediation Verification
-              </p>
-            </div>
-            {colPending[0] && (
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => {
-                  switchRole('worker');
-                  openAction('submit_evidence', colPending[0].agreement, colPending[0].milestone);
-                }}
-                className="flex-shrink-0 text-[11px] py-1 px-2.5"
-              >
-                Test Submit
-              </Button>
-            )}
-          </div>
-
-          {/* Scenario 2: Verifier Signs Audit */}
-          <div className="p-2.5 bg-zinc-900/80 border border-zinc-800 hover:border-cyan-500/60 transition-colors flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5 text-cyan-400 font-bold text-[11px]">
-                <ShieldCheck className="w-3.5 h-3.5 flex-shrink-0" />
-                <span>Auditor: Verify Criteria</span>
-              </div>
-              <p className="text-[11px] text-zinc-400 truncate mt-0.5">
-                Geyser Ingestion ($4,500 USDC)
-              </p>
-            </div>
-            {colEvidence[0] && (
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => {
-                  switchRole('sponsor');
-                  openAction('verify', colEvidence[0].agreement, colEvidence[0].milestone);
-                }}
-                className="flex-shrink-0 text-[11px] py-1 px-2.5"
-              >
-                Test Audit
-              </Button>
-            )}
-          </div>
-
-          {/* Scenario 3: Release Payment */}
-          <div className="p-2.5 bg-zinc-900/80 border border-zinc-800 hover:border-emerald-500/60 transition-colors flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5 text-emerald-400 font-bold text-[11px]">
-                <Coins className="w-3.5 h-3.5 flex-shrink-0" />
-                <span>Settle: Disburse USDC</span>
-              </div>
-              <p className="text-[11px] text-zinc-400 truncate mt-0.5">
-                Fuzz Testing ($6,000 USDC)
-              </p>
-            </div>
-            {colVerified[0] && (
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => {
-                  switchRole('sponsor');
-                  openAction('release', colVerified[0].agreement, colVerified[0].milestone);
-                }}
-                className="flex-shrink-0 text-[11px] py-1 px-2.5 bg-emerald-500 hover:bg-emerald-400 text-black border-emerald-400"
-              >
-                Release USDC
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Main Workspace Header with Search & Filter */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-3">
-        <div className="flex items-center gap-2">
-          <Layers className="w-4 h-4 text-cyan-400" />
-          <h2 className="text-sm sm:text-base font-bold text-zinc-100">
-            Live Settlement Pipeline Board ({allMilestoneItems.length} Milestones)
-          </h2>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search agreement, title, or address..."
-            className="bg-zinc-900 border border-zinc-800 px-3 py-1.5 text-xs text-zinc-100 placeholder-zinc-500 rounded-none focus:outline-none focus:border-cyan-400 w-full sm:w-64"
-          />
-          <Link href="/agreements/new">
-            <Button variant="primary" size="sm">
-              <PlusCircle className="w-3.5 h-3.5 mr-1 text-black" />
-              New Agreement
-            </Button>
-          </Link>
-        </div>
-      </div>
-
-      {/* 4-Stage Kanban Pipeline Board */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Column 1: DoD Committed / In Progress */}
-        <div className="space-y-3">
-          <div className="p-2.5 bg-zinc-900/90 border border-zinc-800 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-zinc-400" />
-              <span className="text-xs font-bold text-zinc-200 uppercase">1. In Execution</span>
-            </div>
-            <span className="text-[11px] text-zinc-400 font-mono px-1.5 bg-zinc-950 border border-zinc-800">
-              {colPending.length}
-            </span>
-          </div>
-
-          <div className="space-y-2.5">
-            {colPending.length === 0 ? (
-              <div className="p-4 text-center border border-dashed border-zinc-800 text-zinc-500 text-xs">
-                No milestones in progress
-              </div>
-            ) : (
-              colPending.map(({ agreement, milestone }) => (
-                <div
-                  key={milestone.publicKey}
-                  className="p-3 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 transition-all space-y-2.5 shadow-sm"
-                >
-                  <div className="flex justify-between items-start gap-2">
-                    <span className="text-[10px] text-cyan-400 font-mono font-bold bg-cyan-950/80 px-1.5 py-0.5 border border-cyan-800">
-                      M#{milestone.index}
-                    </span>
-                    <span className="text-xs font-bold text-emerald-400">
-                      ${formatUsdc(milestone.amountUsdc)} USDC
-                    </span>
-                  </div>
-
-                  <div>
-                    <h4 className="text-xs font-bold text-zinc-100 leading-snug">
-                      {milestone.title}
-                    </h4>
-                    <p className="text-[11px] text-zinc-400 mt-1 line-clamp-1">
-                      {agreement.title}
-                    </p>
-                  </div>
-
-                  <div className="pt-2 border-t border-zinc-800/80 flex items-center justify-between text-[10px] text-zinc-400">
-                    <span>{milestone.dodCriteria.length} DoD Criteria</span>
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      className="text-[10px] py-1 px-2"
-                      onClick={() => openAction('submit_evidence', agreement, milestone)}
-                    >
-                      <UploadCloud className="w-3 h-3 mr-1 text-black" />
-                      Submit Proof
-                    </Button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
-        {/* Column 2: Evidence Submitted (Needs Audit) */}
-        <div className="space-y-3">
-          <div className="p-2.5 bg-zinc-900/90 border border-amber-800/80 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-              <span className="text-xs font-bold text-amber-300 uppercase">2. Evidence Review</span>
-            </div>
-            <span className="text-[11px] text-amber-300 font-mono px-1.5 bg-amber-950 border border-amber-800">
-              {colEvidence.length}
-            </span>
-          </div>
-
-          <div className="space-y-2.5">
-            {colEvidence.length === 0 ? (
-              <div className="p-4 text-center border border-dashed border-zinc-800 text-zinc-500 text-xs">
-                No deliverables awaiting review
-              </div>
-            ) : (
-              colEvidence.map(({ agreement, milestone }) => (
-                <div
-                  key={milestone.publicKey}
-                  className="p-3 bg-zinc-950 border border-amber-900/60 hover:border-amber-700 transition-all space-y-2.5 shadow-sm"
-                >
-                  <div className="flex justify-between items-start gap-2">
-                    <span className="text-[10px] text-amber-400 font-mono font-bold bg-amber-950 px-1.5 py-0.5 border border-amber-800">
-                      M#{milestone.index}
-                    </span>
-                    <span className="text-xs font-bold text-emerald-400">
-                      ${formatUsdc(milestone.amountUsdc)} USDC
-                    </span>
-                  </div>
-
-                  <div>
-                    <h4 className="text-xs font-bold text-zinc-100 leading-snug">
-                      {milestone.title}
-                    </h4>
-                    <p className="text-[11px] text-zinc-400 mt-1 line-clamp-1">
-                      {agreement.title}
-                    </p>
-                  </div>
-
-                  {milestone.evidence && (
-                    <div className="text-[10px] text-cyan-300 truncate font-mono bg-zinc-900 p-1 border border-zinc-800">
-                      Proof: {truncateAddress(milestone.evidence.metadataUri, 12)}
-                    </div>
-                  )}
-
-                  <div className="pt-2 border-t border-zinc-800/80 flex items-center justify-between text-[10px]">
-                    <span className="text-amber-400">Audit Ready</span>
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      className="text-[10px] py-1 px-2"
-                      onClick={() => openAction('verify', agreement, milestone)}
-                    >
-                      <ShieldCheck className="w-3 h-3 mr-1 text-black" />
-                      Verify DoD
-                    </Button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
-        {/* Column 3: Verified (Ready for Settlement Release) */}
-        <div className="space-y-3">
-          <div className="p-2.5 bg-zinc-900/90 border border-cyan-800 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-cyan-400" />
-              <span className="text-xs font-bold text-cyan-300 uppercase">3. Settlement Unlocked</span>
-            </div>
-            <span className="text-[11px] text-cyan-300 font-mono px-1.5 bg-cyan-950 border border-cyan-800">
-              {colVerified.length}
-            </span>
-          </div>
-
-          <div className="space-y-2.5">
-            {colVerified.length === 0 ? (
-              <div className="p-4 text-center border border-dashed border-zinc-800 text-zinc-500 text-xs">
-                No verified funds awaiting release
-              </div>
-            ) : (
-              colVerified.map(({ agreement, milestone }) => (
-                <div
-                  key={milestone.publicKey}
-                  className="p-3 bg-zinc-950 border border-cyan-900/70 hover:border-cyan-600 transition-all space-y-2.5 shadow-sm"
-                >
-                  <div className="flex justify-between items-start gap-2">
-                    <span className="text-[10px] text-cyan-400 font-mono font-bold bg-cyan-950 px-1.5 py-0.5 border border-cyan-800">
-                      M#{milestone.index}
-                    </span>
-                    <span className="text-xs font-bold text-emerald-400">
-                      ${formatUsdc(milestone.amountUsdc)} USDC
-                    </span>
-                  </div>
-
-                  <div>
-                    <h4 className="text-xs font-bold text-zinc-100 leading-snug">
-                      {milestone.title}
-                    </h4>
-                    <p className="text-[11px] text-zinc-400 mt-1 line-clamp-1">
-                      {agreement.title}
-                    </p>
-                  </div>
-
-                  <div className="text-[10px] text-emerald-400 bg-emerald-950/40 p-1 border border-emerald-900/60">
-                    Criteria Verified ✓ Vault Unlocked
-                  </div>
-
-                  <div className="pt-2 border-t border-zinc-800/80 flex items-center justify-between text-[10px]">
-                    <span className="text-zinc-400">Claimable</span>
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      className="text-[10px] py-1 px-2 bg-emerald-500 hover:bg-emerald-400 text-black border-emerald-400"
-                      onClick={() => openAction('release', agreement, milestone)}
-                    >
-                      <Coins className="w-3 h-3 mr-1 text-black" />
-                      Release USDC
-                    </Button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
-        {/* Column 4: Settled & Released */}
-        <div className="space-y-3">
-          <div className="p-2.5 bg-zinc-900/90 border border-emerald-800 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-400" />
-              <span className="text-xs font-bold text-emerald-300 uppercase">4. Settled (Terminal)</span>
-            </div>
-            <span className="text-[11px] text-emerald-300 font-mono px-1.5 bg-emerald-950 border border-emerald-800">
-              {colReleased.length}
-            </span>
-          </div>
-
-          <div className="space-y-2.5">
-            {colReleased.length === 0 ? (
-              <div className="p-4 text-center border border-dashed border-zinc-800 text-zinc-500 text-xs">
-                No finalized settlements yet
-              </div>
-            ) : (
-              colReleased.map(({ agreement, milestone }) => (
-                <div
-                  key={milestone.publicKey}
-                  className="p-3 bg-zinc-950 border border-emerald-900/40 hover:border-emerald-800 transition-all space-y-2.5 shadow-sm"
-                >
-                  <div className="flex justify-between items-start gap-2">
-                    <span className="text-[10px] text-emerald-400 font-mono font-bold bg-emerald-950 px-1.5 py-0.5 border border-emerald-800">
-                      M#{milestone.index}
-                    </span>
-                    <span className="text-xs font-bold text-emerald-400">
-                      ${formatUsdc(milestone.amountUsdc)} USDC
-                    </span>
-                  </div>
-
-                  <div>
-                    <h4 className="text-xs font-bold text-zinc-100 leading-snug">
-                      {milestone.title}
-                    </h4>
-                    <p className="text-[11px] text-zinc-400 mt-1 line-clamp-1">
-                      {agreement.title}
-                    </p>
-                  </div>
-
-                  {milestone.settlementTx && (
-                    <div className="text-[10px] text-zinc-400 flex items-center justify-between pt-1">
-                      <span>Tx:</span>
-                      <a
-                        href={getExplorerUrl(milestone.settlementTx, 'tx')}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-cyan-400 hover:underline flex items-center gap-0.5 font-mono"
-                      >
-                        {truncateAddress(milestone.settlementTx, 4)}
-                        <ExternalLink className="w-2.5 h-2.5" />
-                      </a>
-                    </div>
-                  )}
-
-                  <div className="pt-2 border-t border-zinc-800/80 flex items-center justify-between text-[10px]">
-                    <span className="text-emerald-400">Finalized On-Chain</span>
-                    <Link
-                      href={`/agreements/${agreement.publicKey}/m/${milestone.index}`}
-                      className="text-cyan-400 hover:underline inline-flex items-center gap-0.5"
-                    >
-                      Audit Trail <ChevronRight className="w-3 h-3" />
-                    </Link>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Agreements Directory Drawer / List */}
-      <div className="p-4 bg-zinc-950 border border-zinc-800 space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider">
-            All On-Chain Agreements ({agreements.length})
-          </h3>
-          <span className="text-[10px] text-zinc-500">Anchor PDA Accounts</span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
-          {agreements.map((a) => {
-            const releasedCount = a.milestones.filter(
-              (m) => m.state === MilestoneState.RELEASED
-            ).length;
-
-            return (
-              <div
-                key={a.publicKey}
-                className="p-3 bg-zinc-900/60 border border-zinc-800 hover:border-zinc-700 transition-colors flex flex-col justify-between gap-3"
-              >
-                <div>
-                  <div className="flex justify-between items-start gap-2">
-                    <Link
-                      href={`/agreements/${a.publicKey}`}
-                      className="font-bold text-zinc-100 hover:text-cyan-400 truncate"
-                    >
-                      {a.title}
-                    </Link>
-                    <span className="text-[10px] text-emerald-400 font-bold whitespace-nowrap">
-                      ${formatUsdc(a.totalAmountUsdc)}
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-zinc-400 line-clamp-1 mt-0.5">
-                    {a.description}
-                  </p>
-                </div>
-
-                <div className="flex items-center justify-between text-[10px] text-zinc-400 border-t border-zinc-800 pt-2">
-                  <span>
-                    {releasedCount}/{a.milestones.length} Milestones Settled
-                  </span>
-                  <Link
-                    href={`/agreements/${a.publicKey}`}
-                    className="text-cyan-400 hover:underline inline-flex items-center gap-0.5"
-                  >
-                    Open Console <ArrowRight className="w-3 h-3" />
-                  </Link>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      {/* Top Drawer for Transaction Execution State */}
+      <TxStateModal state={txState} isOpen={isTxOpen} onClose={resetTx} />
     </div>
   );
 }

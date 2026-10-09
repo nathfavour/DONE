@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { MilestoneAccount, MilestoneState, VerificationType } from '@/types/protocol';
+import { MilestoneAccount, MilestoneState } from '@/types/protocol';
 import { truncateAddress, formatUsdc, getExplorerUrl } from '@/lib/solana';
 import { protocolClient } from '@/lib/protocol/client';
 import { PublicKey } from '@solana/web3.js';
@@ -15,8 +15,6 @@ import {
   Coins,
   FileCheck,
   Lock,
-  ArrowRight,
-  UserCheck,
 } from 'lucide-react';
 
 interface VerificationCardProps {
@@ -33,7 +31,6 @@ interface VerificationCardProps {
 export function VerificationCard({
   agreementKey,
   milestone,
-  isVerifierOrSponsor,
   onExecute,
 }: VerificationCardProps) {
   const [checkedCriteria, setCheckedCriteria] = useState<Record<number, boolean>>({});
@@ -94,27 +91,27 @@ export function VerificationCard({
   // 1. If released, show terminal settlement card
   if (milestone.state === MilestoneState.RELEASED) {
     return (
-      <Card className="border-emerald-800 bg-zinc-950 font-mono">
-        <CardHeader className="bg-emerald-950/40 border-emerald-900/60">
+      <Card className="border-emerald-500/30 font-mono">
+        <CardHeader>
           <div className="flex items-center gap-2 text-emerald-400">
             <CheckCircle2 className="w-4 h-4" />
             <h3 className="font-bold text-sm tracking-wider uppercase">
               MILESTONE SETTLED & FUNDS RELEASED
             </h3>
           </div>
-          <span className="text-[11px] text-emerald-300 font-bold">TERMINAL STATE</span>
+          <span className="text-[11px] text-emerald-400 font-bold">TERMINAL STATE</span>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="p-3 bg-zinc-900 border border-zinc-800 space-y-2 text-xs">
+          <div className="p-4 bg-[#141416] border border-[#202024] rounded-xl space-y-2 text-xs">
             <div className="flex justify-between items-center">
-              <span className="text-zinc-400">SETTLED VALUE:</span>
+              <span className="text-neutral-400">SETTLED VALUE:</span>
               <span className="text-base font-bold text-emerald-400">
                 ${formatUsdc(milestone.amountUsdc)} USDC
               </span>
             </div>
             {milestone.settlementTx && (
-              <div className="flex justify-between items-center pt-2 border-t border-zinc-800">
-                <span className="text-zinc-400">SOLANA TX SIGNATURE:</span>
+              <div className="flex justify-between items-center pt-2 border-t border-[#26262a]">
+                <span className="text-neutral-400">SOLANA TX SIGNATURE:</span>
                 <a
                   href={getExplorerUrl(milestone.settlementTx, 'tx')}
                   target="_blank"
@@ -128,8 +125,8 @@ export function VerificationCard({
             )}
             {milestone.releasedAt && (
               <div className="flex justify-between items-center text-[11px]">
-                <span className="text-zinc-400">TIMESTAMP:</span>
-                <span className="text-zinc-300">
+                <span className="text-neutral-400">TIMESTAMP:</span>
+                <span className="text-neutral-300">
                   {new Date(milestone.releasedAt).toLocaleString()}
                 </span>
               </div>
@@ -143,8 +140,8 @@ export function VerificationCard({
   // 2. If verified, show settlement release trigger
   if (milestone.state === MilestoneState.VERIFIED) {
     return (
-      <Card className="border-cyan-800 bg-zinc-950 font-mono">
-        <CardHeader className="bg-cyan-950/40 border-cyan-900/60">
+      <Card className="border-cyan-500/30 font-mono">
+        <CardHeader>
           <div className="flex items-center gap-2 text-cyan-400">
             <ShieldCheck className="w-4 h-4" />
             <h3 className="font-bold text-sm tracking-wider uppercase">
@@ -154,34 +151,34 @@ export function VerificationCard({
           <span className="text-[11px] text-cyan-300 font-bold">READY FOR DISBURSAL</span>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-xs text-zinc-300">
+          <p className="text-xs text-neutral-400">
             Definition of Done criteria have been cryptographically verified by the authorized party. The protocol escrow vault is now unlocked for settlement release to the worker’s USDC token account.
           </p>
 
-          <div className="p-3 bg-zinc-900 border border-zinc-800 space-y-2 text-xs">
+          <div className="p-4 bg-[#141416] border border-[#202024] rounded-xl space-y-2 text-xs">
             <div className="flex justify-between items-center">
-              <span className="text-zinc-400">CLAIMABLE VALUE:</span>
+              <span className="text-neutral-400">CLAIMABLE VALUE:</span>
               <span className="text-base font-bold text-emerald-400">
                 ${formatUsdc(milestone.amountUsdc)} USDC
               </span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-zinc-400">VERIFIED BY:</span>
-              <span className="text-zinc-300 font-mono text-[11px]">
+              <span className="text-neutral-400">VERIFIED BY:</span>
+              <span className="text-neutral-300 font-mono text-[11px]">
                 {truncateAddress(milestone.verification?.verifiedBy, 8)}
               </span>
             </div>
             {milestone.verification?.notes && (
-              <div className="pt-2 border-t border-zinc-800 text-[11px] text-zinc-400">
-                <span className="font-semibold text-zinc-300 block mb-0.5">VERIFIER NOTES:</span>
+              <div className="pt-2 border-t border-[#26262a] text-[11px] text-neutral-400">
+                <span className="font-semibold text-neutral-300 block mb-0.5">VERIFIER NOTES:</span>
                 {milestone.verification.notes}
               </div>
             )}
           </div>
         </CardContent>
         <CardFooter className="justify-between">
-          <span className="text-[11px] text-zinc-400">
-            Any participant or sponsor may trigger deterministic release
+          <span className="text-[11px] text-neutral-500">
+            Escrow Vault ready to transfer USDC to Worker ATA
           </span>
           <Button
             variant="primary"
@@ -190,7 +187,7 @@ export function VerificationCard({
             disabled={isReleasing}
             isLoading={isReleasing}
           >
-            <Coins className="w-4 h-4 mr-1 text-black" />
+            <Coins className="w-4 h-4 mr-2" />
             Release Payment (${formatUsdc(milestone.amountUsdc)} USDC)
           </Button>
         </CardFooter>
@@ -201,8 +198,8 @@ export function VerificationCard({
   // 3. If evidence is submitted, show verification audit view
   if (milestone.state === MilestoneState.EVIDENCE_SUBMITTED) {
     return (
-      <Card className="border-amber-900/60 bg-zinc-950 font-mono">
-        <CardHeader className="bg-amber-950/40 border-amber-900/60">
+      <Card className="border-amber-500/30 font-mono">
+        <CardHeader>
           <div className="flex items-center gap-2 text-amber-400">
             <FileCheck className="w-4 h-4" />
             <h3 className="font-bold text-sm tracking-wider uppercase">
@@ -212,14 +209,14 @@ export function VerificationCard({
           <span className="text-[11px] text-amber-300 font-bold">ACTION REQUIRED</span>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-xs text-zinc-400">
+          <p className="text-xs text-neutral-400">
             As the designated verifier ({truncateAddress(milestone.verifier, 6)}), check off each Definition of Done item against the submitted artifacts before confirming block verification.
           </p>
 
           {/* Criteria Checklist */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-zinc-300 tracking-wider uppercase block">
+              <label className="text-xs font-semibold text-neutral-300 tracking-wider uppercase block">
                 CANONICAL CRITERIA AUDIT CHECKLIST:
               </label>
               <button
@@ -231,7 +228,7 @@ export function VerificationCard({
                   });
                   setCheckedCriteria(all);
                 }}
-                className="text-[10px] text-cyan-300 hover:text-cyan-200 bg-zinc-900 px-2 py-0.5 border border-zinc-700"
+                className="text-[10px] text-cyan-300 bg-[#141416] px-2.5 py-1 rounded-lg border border-[#26262a]"
               >
                 ⚡ Check All Criteria
               </button>
@@ -241,17 +238,17 @@ export function VerificationCard({
                 <div
                   key={idx}
                   onClick={() => toggleCriteria(idx)}
-                  className={`p-2.5 border cursor-pointer select-none transition-colors flex items-start gap-2.5 ${
+                  className={`p-3 border rounded-xl cursor-pointer select-none transition-colors flex items-start gap-2.5 ${
                     checkedCriteria[idx]
-                      ? 'bg-zinc-900 border-cyan-500/80 text-zinc-100'
-                      : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:border-zinc-700'
+                      ? 'bg-[#141416] border-emerald-500/50 text-neutral-100'
+                      : 'bg-[#0d0d0f] border-[#26262a] text-neutral-400'
                   }`}
                 >
                   <div
-                    className={`w-4 h-4 rounded-none mt-0.5 border flex items-center justify-center flex-shrink-0 ${
+                    className={`w-4 h-4 rounded mt-0.5 border flex items-center justify-center flex-shrink-0 ${
                       checkedCriteria[idx]
-                        ? 'bg-cyan-500 border-cyan-400 text-black'
-                        : 'border-zinc-700 bg-zinc-900'
+                        ? 'bg-emerald-500 border-emerald-500 text-black'
+                        : 'border-[#26262a]'
                     }`}
                   >
                     {checkedCriteria[idx] && <CheckCircle2 className="w-3.5 h-3.5 text-black" />}
@@ -273,7 +270,7 @@ export function VerificationCard({
         </CardContent>
 
         <CardFooter className="justify-between">
-          <span className="text-[11px] text-zinc-400">
+          <span className="text-[11px] text-neutral-500">
             {allCriteriaChecked
               ? 'All criteria checked ✓'
               : `Check all ${milestone.dodCriteria.length} items to confirm`}
@@ -285,8 +282,8 @@ export function VerificationCard({
             disabled={!allCriteriaChecked || isVerifying}
             isLoading={isVerifying}
           >
-            <ShieldCheck className="w-4 h-4 mr-1 text-black" />
-            Sign & Verify Milestone on Solana
+            <ShieldCheck className="w-4 h-4 mr-2" />
+            Sign & Verify Milestone on Chain
           </Button>
         </CardFooter>
       </Card>
@@ -295,18 +292,18 @@ export function VerificationCard({
 
   // 4. Milestone is PENDING (Work in progress)
   return (
-    <Card className="border-zinc-800 bg-zinc-950 font-mono">
-      <CardHeader className="bg-zinc-900/60">
-        <div className="flex items-center gap-2 text-zinc-400">
-          <Lock className="w-4 h-4 text-zinc-500" />
-          <h3 className="font-bold text-sm tracking-wider uppercase text-zinc-300">
+    <Card className="font-mono">
+      <CardHeader>
+        <div className="flex items-center gap-2 text-neutral-400">
+          <Lock className="w-4 h-4" />
+          <h3 className="font-bold text-sm tracking-wider uppercase text-neutral-300">
             VERIFICATION PIPELINE LOCKED
           </h3>
         </div>
-        <span className="text-[11px] text-zinc-400">AWAITING EVIDENCE</span>
+        <span className="text-[11px] text-neutral-500">AWAITING EVIDENCE</span>
       </CardHeader>
       <CardContent>
-        <p className="text-xs text-zinc-400 leading-relaxed">
+        <p className="text-xs text-neutral-400 leading-relaxed">
           The Definition of Done has been committed on-chain with hash{' '}
           <span className="text-cyan-400 font-mono">{truncateAddress(milestone.dodHash, 8)}</span>.
           Work is currently in flight. Once the worker submits proof artifacts, the verification audit step will unlock.

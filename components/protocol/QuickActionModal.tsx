@@ -8,21 +8,25 @@ import { hashEvidencePayload, uint8ArrayToHex } from '@/lib/protocol/hashing';
 import { useWallet } from '../web3/WalletContext';
 import { Button } from '../ui/Button';
 import { Input, Textarea } from '../ui/Input';
+import { SlideDrawer } from '../ui/SlideDrawer';
 import { PublicKey } from '@solana/web3.js';
 import {
   Lock,
   UploadCloud,
   ShieldCheck,
   Coins,
-  CheckCircle2,
   ExternalLink,
-  X,
   Droplets,
-  AlertCircle,
+  CheckCircle2,
+  FileCode,
+  ArrowRight,
   Hash,
+  Copy,
+  Check,
 } from 'lucide-react';
+import { MilestoneStateBadge } from '../ui/Badge';
 
-export type QuickActionType = 'fund' | 'submit_evidence' | 'verify' | 'release';
+export type QuickActionType = 'fund' | 'submit_evidence' | 'verify' | 'release' | 'inspect';
 
 interface QuickActionModalProps {
   isOpen: boolean;
@@ -35,6 +39,7 @@ interface QuickActionModalProps {
     instructionSummary: string,
     fn: () => Promise<any>
   ) => Promise<any>;
+  onSwitchAction?: (type: QuickActionType, milestone?: MilestoneAccount) => void;
 }
 
 export function QuickActionModal({
@@ -44,21 +49,29 @@ export function QuickActionModal({
   agreement,
   milestone,
   onExecute,
+  onSwitchAction,
 }: QuickActionModalProps) {
   const { usdcBalance, deductUsdc, creditUsdc, requestDevnetUsdcFaucet } = useWallet();
 
   // Evidence state
   const [metadataUri, setMetadataUri] = useState('https://arweave.net/tx_verifiable_work_artifact_v1.tar.gz');
-  const [evidenceNotes, setEvidenceNotes] = useState('Completed implementation and verified 100% test coverage against DoD requirements.');
+  const [evidenceNotes, setEvidenceNotes] = useState('Completed implementation and verified 100% test coverage against committed DoD.');
   const [deliverableLink, setDeliverableLink] = useState('https://github.com/done-protocol/core/pull/88');
   const [computedEvidenceHash, setComputedEvidenceHash] = useState('');
 
   // Verification state
   const [checkedCriteria, setCheckedCriteria] = useState<Record<number, boolean>>({});
-  const [verificationNotes, setVerificationNotes] = useState('Verified code quality, invariant tests, and Arweave artifacts match DoD.');
+  const [verificationNotes, setVerificationNotes] = useState('Audited criteria against committed canonical DoD SHA-256 hash.');
 
-  // Loading state
+  // Loading & copy state
   const [isProcessing, setIsProcessing] = useState(false);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const copyText = (text: string, keyName: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedKey(keyName);
+    setTimeout(() => setCopiedKey(null), 1500);
+  };
 
   // Compute evidence hash when input changes
   useEffect(() => {
@@ -132,14 +145,14 @@ export function QuickActionModal({
     }
   };
 
-  // 3. VERIFY DoD
+  // 3. VERIFY CRITERIA
   const handleVerify = async () => {
     if (!milestone) return;
     setIsProcessing(true);
     try {
       await onExecute(
         'verifyMilestone',
-        `Verifier signing off Milestone #${milestone.index} Definition of Done fulfillment`,
+        `Sponsor auditing & finalizing verification for Milestone #${milestone.index}`,
         async () => {
           return protocolClient.verifyMilestone({
             agreement: new PublicKey(agreement.publicKey),
@@ -154,16 +167,16 @@ export function QuickActionModal({
     }
   };
 
-  // 4. RELEASE PAYMENT
+  // 4. RELEASE SETTLEMENT
   const handleRelease = async () => {
     if (!milestone) return;
     setIsProcessing(true);
     try {
       await onExecute(
-        'releasePayment',
-        `Disbursing ${formatUsdc(milestone.amountUsdc)} USDC from Escrow Vault to Worker ATA`,
+        'releaseSettlement',
+        `Disbursing ${formatUsdc(milestone.amountUsdc)} USDC from Vault PDA to Worker ATA (${truncateAddress(agreement.worker, 4)})`,
         async () => {
-          const res = await protocolClient.releasePayment({
+          const res = await protocolClient.releaseSettlement({
             agreement: new PublicKey(agreement.publicKey),
             milestoneIndex: milestone.index,
           });
@@ -177,59 +190,256 @@ export function QuickActionModal({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150 font-mono">
-      <div className="relative w-full max-w-lg bg-zinc-950 border border-zinc-800 shadow-2xl p-6 text-zinc-200">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-zinc-800 pb-3 mb-4">
-          <div className="flex items-center gap-2">
-            {actionType === 'fund' && <Lock className="w-4 h-4 text-cyan-400" />}
-            {actionType === 'submit_evidence' && <UploadCloud className="w-4 h-4 text-amber-400" />}
-            {actionType === 'verify' && <ShieldCheck className="w-4 h-4 text-cyan-400" />}
-            {actionType === 'release' && <Coins className="w-4 h-4 text-emerald-400" />}
-            <span className="font-bold text-xs uppercase tracking-wider text-zinc-100">
-              {actionType === 'fund' && 'Fund Protocol Escrow Vault'}
-              {actionType === 'submit_evidence' && 'Submit Deliverable Evidence'}
-              {actionType === 'verify' && 'Perform Verification Audit'}
-              {actionType === 'release' && 'Release USDC Settlement'}
-            </span>
-          </div>
-          <button onClick={onClose} className="text-zinc-500 hover:text-zinc-300">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
+  const titles: Record<QuickActionType, string> = {
+    fund: 'Fund Protocol Escrow Vault',
+    submit_evidence: `Submit Evidence — Milestone #${milestone?.index ?? 0}`,
+    verify: `Verification Audit — Milestone #${milestone?.index ?? 0}`,
+    release: `Release Settlement — Milestone #${milestone?.index ?? 0}`,
+    inspect: `On-Chain Inspector — ${milestone ? `Milestone #${milestone.index}` : 'Agreement Account'}`,
+  };
 
-        {/* Body based on action */}
+  const subtitles: Record<QuickActionType, string> = {
+    fund: agreement.title,
+    submit_evidence: milestone?.title ?? agreement.title,
+    verify: milestone?.title ?? agreement.title,
+    release: `$${formatUsdc(milestone?.amountUsdc ?? 0)} USDC to Worker ATA`,
+    inspect: milestone?.title ?? agreement.title,
+  };
+
+  return (
+    <SlideDrawer
+      isOpen={isOpen}
+      onClose={onClose}
+      title={titles[actionType]}
+      subtitle={subtitles[actionType]}
+    >
+      <div className="space-y-5 text-xs font-mono">
+        {/* INSPECT PROTOCOL RECORD */}
+        {actionType === 'inspect' && (
+          <div className="space-y-4">
+            {/* Status and summary */}
+            <div className="p-3.5 bg-[#141416] border border-[#202024] rounded-xl space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-neutral-400">STATE:</span>
+                {milestone ? (
+                  <MilestoneStateBadge state={milestone.state} />
+                ) : (
+                  <span className="font-bold text-neutral-200">{agreement.state}</span>
+                )}
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-neutral-400">ALLOCATED BUDGET:</span>
+                <span className="text-emerald-400 font-bold text-sm">
+                  ${formatUsdc(milestone ? milestone.amountUsdc : agreement.totalAmountUsdc)} USDC
+                </span>
+              </div>
+              {milestone && (
+                <div className="flex items-center justify-between border-t border-[#26262a] pt-2">
+                  <span className="text-neutral-400">VERIFICATION TYPE:</span>
+                  <span className="text-neutral-300 font-semibold uppercase">{milestone.verificationType}</span>
+                </div>
+              )}
+            </div>
+
+            {/* PDAs and Cryptographic Commitments */}
+            <div className="space-y-2">
+              <span className="text-[10px] text-neutral-400 uppercase tracking-wider block font-semibold">
+                On-Chain Accounts & Derived PDAs
+              </span>
+              <div className="bg-[#141416] border border-[#202024] rounded-xl p-3 space-y-2.5 text-[11px]">
+                <div className="flex items-center justify-between">
+                  <span className="text-neutral-400">Vault PDA:</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-cyan-300 font-mono">{truncateAddress(agreement.vaultPda, 5)}</span>
+                    <button
+                      onClick={() => copyText(agreement.vaultPda, 'vault')}
+                      className="text-neutral-400 hover:text-white"
+                    >
+                      {copiedKey === 'vault' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-neutral-400">Agreement PDA:</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-neutral-300 font-mono">{truncateAddress(agreement.publicKey, 5)}</span>
+                    <button
+                      onClick={() => copyText(agreement.publicKey, 'agree')}
+                      className="text-neutral-400 hover:text-white"
+                    >
+                      {copiedKey === 'agree' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                    </button>
+                  </div>
+                </div>
+
+                {milestone && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-neutral-400">Milestone PDA:</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-neutral-300 font-mono">{truncateAddress(milestone.publicKey, 5)}</span>
+                      <button
+                        onClick={() => copyText(milestone.publicKey, 'mPda')}
+                        className="text-neutral-400 hover:text-white"
+                      >
+                        {copiedKey === 'mPda' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Definition of Done Breakdown */}
+            {milestone && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] text-neutral-400 uppercase tracking-wider font-semibold">
+                    Definition of Done (DoD) Criteria
+                  </span>
+                  <span className="text-[10px] text-neutral-500 font-mono">
+                    SHA-256: {truncateAddress(milestone.dodHash, 4)}
+                  </span>
+                </div>
+                <div className="space-y-1.5">
+                  {milestone.dodCriteria.map((crit, idx) => (
+                    <div
+                      key={idx}
+                      className="p-2.5 rounded-xl bg-[#141416] border border-[#202024] flex items-start gap-2.5"
+                    >
+                      <span className="text-emerald-400 font-bold">✓</span>
+                      <span className="text-neutral-300 text-[11px] leading-relaxed">{crit}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Evidence Payload details if present */}
+            {milestone?.evidence && (
+              <div className="space-y-2">
+                <span className="text-[10px] text-neutral-400 uppercase tracking-wider block font-semibold">
+                  Submitted Evidence Record
+                </span>
+                <div className="p-3 bg-[#141416] border border-[#202024] rounded-xl space-y-2 text-[11px]">
+                  <div className="flex justify-between">
+                    <span className="text-neutral-400">Evidence Hash:</span>
+                    <span className="text-cyan-300 font-mono">{truncateAddress(milestone.evidence.evidenceHash, 6)}</span>
+                  </div>
+                  <div>
+                    <span className="text-neutral-400 block mb-0.5">Worker Notes:</span>
+                    <p className="text-neutral-300 italic">{milestone.evidence.notes}</p>
+                  </div>
+                  {milestone.evidence.metadataUri && (
+                    <div className="pt-1">
+                      <a
+                        href={milestone.evidence.metadataUri}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-cyan-400 hover:underline inline-flex items-center gap-1"
+                      >
+                        <span>View Arweave Artifact</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Settlement transaction details if released */}
+            {milestone?.settlementTx && (
+              <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl space-y-1.5">
+                <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider block">
+                  Disbursed & Finalized
+                </span>
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-neutral-400">Settlement Signature:</span>
+                  <a
+                    href={getExplorerUrl(milestone.settlementTx, 'tx')}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-emerald-300 hover:underline inline-flex items-center gap-1 font-mono"
+                  >
+                    {truncateAddress(milestone.settlementTx, 5)}
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+              </div>
+            )}
+
+            {/* Next Action trigger inside inspection drawer */}
+            {onSwitchAction && milestone && (
+              <div className="pt-3 border-t border-[#26262a]">
+                {milestone.state === MilestoneState.PENDING && (
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => onSwitchAction('submit_evidence', milestone)}
+                  >
+                    <UploadCloud className="w-4 h-4 mr-2" />
+                    Proceed to Submit Evidence
+                  </Button>
+                )}
+                {milestone.state === MilestoneState.EVIDENCE_SUBMITTED && (
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => onSwitchAction('verify', milestone)}
+                  >
+                    <ShieldCheck className="w-4 h-4 mr-2" />
+                    Proceed to Verification Audit
+                  </Button>
+                )}
+                {milestone.state === MilestoneState.VERIFIED && (
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => onSwitchAction('release', milestone)}
+                  >
+                    <Coins className="w-4 h-4 mr-2" />
+                    Proceed to Disburse Escrow
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* FUND ESCROW */}
         {actionType === 'fund' && (
-          <div className="space-y-4 text-xs">
-            <p className="text-zinc-400">
+          <div className="space-y-4">
+            <p className="text-neutral-400">
               Lock required milestone budget from your wallet into the program&apos;s Escrow Vault PDA.
             </p>
-            <div className="p-3 bg-zinc-900 border border-zinc-800 space-y-2">
+            <div className="p-4 bg-[#141416] border border-[#202024] rounded-xl space-y-2.5">
               <div className="flex justify-between">
-                <span className="text-zinc-400">AGREEMENT:</span>
-                <span className="font-bold text-zinc-200 truncate max-w-[200px]">{agreement.title}</span>
+                <span className="text-neutral-400">AGREEMENT:</span>
+                <span className="font-bold text-neutral-200 truncate max-w-[200px]">{agreement.title}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-zinc-400">TOTAL REQUIRED:</span>
+                <span className="text-neutral-400">TOTAL REQUIRED:</span>
                 <span className="font-bold text-emerald-400 text-sm">
                   ${formatUsdc(agreement.totalAmountUsdc)} USDC
                 </span>
               </div>
-              <div className="flex justify-between border-t border-zinc-800 pt-2">
-                <span className="text-zinc-400">YOUR WALLET:</span>
-                <span className="text-zinc-300">${formatUsdc(usdcBalance)} USDC</span>
+              <div className="flex justify-between border-t border-[#26262a] pt-2">
+                <span className="text-neutral-400">YOUR WALLET:</span>
+                <span className="text-neutral-300">${formatUsdc(usdcBalance)} USDC</span>
               </div>
             </div>
 
             {usdcBalance < agreement.totalAmountUsdc && (
-              <div className="p-2.5 bg-amber-950/40 border border-amber-800 text-amber-300 space-y-2">
+              <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-300 space-y-2">
                 <span className="text-[11px] block">Need more Devnet USDC to fund this escrow?</span>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => requestDevnetUsdcFaucet(agreement.totalAmountUsdc)}
-                  className="w-full text-cyan-300 border-cyan-800"
+                  className="w-full text-cyan-300 border-[#26262a]"
                 >
                   <Droplets className="w-3.5 h-3.5 mr-1" />
                   Top Up +${formatUsdc(agreement.totalAmountUsdc)} USDC
@@ -237,7 +447,7 @@ export function QuickActionModal({
               </div>
             )}
 
-            <div className="pt-3 border-t border-zinc-800 flex justify-end gap-2">
+            <div className="pt-4 border-t border-[#26262a] flex justify-end gap-2">
               <Button variant="outline" size="sm" onClick={onClose} disabled={isProcessing}>
                 Cancel
               </Button>
@@ -254,49 +464,47 @@ export function QuickActionModal({
           </div>
         )}
 
+        {/* SUBMIT EVIDENCE */}
         {actionType === 'submit_evidence' && milestone && (
-          <div className="space-y-4 text-xs">
-            <div className="p-2.5 bg-zinc-900 border border-zinc-800">
-              <span className="text-[10px] text-zinc-400 block uppercase font-bold">TARGET CRITERIA:</span>
-              <ul className="mt-1 space-y-1 text-zinc-300">
-                {milestone.dodCriteria.map((c, i) => (
-                  <li key={i} className="flex gap-1.5 items-start">
-                    <span className="text-cyan-400">✓</span> {c}
-                  </li>
-                ))}
-              </ul>
+          <div className="space-y-4">
+            <div className="p-3 bg-[#141416] border border-[#202024] rounded-xl text-[11px] space-y-1">
+              <span className="text-neutral-400">TARGET MILESTONE:</span>
+              <p className="font-semibold text-neutral-200">{milestone.title}</p>
+              <span className="text-emerald-400 font-bold block mt-1">
+                Amount: ${formatUsdc(milestone.amountUsdc)} USDC
+              </span>
             </div>
 
             <Input
-              label="ARTIFACT / METADATA URI (ARWEAVE / IPFS)"
-              value={metadataUri}
-              onChange={(e) => setMetadataUri(e.target.value)}
-              required
+              label="DELIVERABLE REPOSITORY / PR LINK"
+              value={deliverableLink}
+              onChange={(e) => setDeliverableLink(e.target.value)}
+              placeholder="https://github.com/org/repo/pull/12"
             />
 
             <Input
-              label="CODE / PR VERIFICATION LINK"
-              value={deliverableLink}
-              onChange={(e) => setDeliverableLink(e.target.value)}
-              required
+              label="ARWEAVE / IPFS ARTIFACT URI"
+              value={metadataUri}
+              onChange={(e) => setMetadataUri(e.target.value)}
+              placeholder="https://arweave.net/tx_hash"
             />
 
             <Textarea
-              label="EXECUTION & COMPLIANCE NOTES"
-              rows={2}
+              label="EVIDENCE SUMMARY & NOTES"
+              rows={3}
               value={evidenceNotes}
               onChange={(e) => setEvidenceNotes(e.target.value)}
-              required
+              placeholder="Describe work completed against criteria..."
             />
 
-            <div className="p-2.5 bg-zinc-900 border border-zinc-800 text-[11px]">
-              <span className="text-[10px] text-zinc-400 block uppercase font-bold">
-                CANONICAL SHA-256 EVIDENCE COMMITMENT:
-              </span>
-              <span className="text-amber-300 font-mono break-all">{computedEvidenceHash}</span>
+            <div className="p-3 bg-[#141416] border border-[#202024] rounded-xl space-y-1">
+              <span className="text-[10px] text-neutral-400 uppercase">Live Canonical Evidence SHA-256:</span>
+              <p className="font-mono text-[11px] text-cyan-300 truncate">
+                {computedEvidenceHash || 'Calculating pre-image hash...'}
+              </p>
             </div>
 
-            <div className="pt-3 border-t border-zinc-800 flex justify-end gap-2">
+            <div className="pt-4 border-t border-[#26262a] flex justify-end gap-2">
               <Button variant="outline" size="sm" onClick={onClose} disabled={isProcessing}>
                 Cancel
               </Button>
@@ -304,52 +512,65 @@ export function QuickActionModal({
                 variant="primary"
                 size="sm"
                 onClick={handleSubmitEvidence}
-                disabled={isProcessing || !metadataUri.trim()}
+                disabled={isProcessing || !computedEvidenceHash}
                 isLoading={isProcessing}
               >
-                Log Evidence on Solana
+                Submit Proof to Chain
               </Button>
             </div>
           </div>
         )}
 
+        {/* VERIFICATION ENGINE */}
         {actionType === 'verify' && milestone && (
-          <div className="space-y-4 text-xs">
-            <p className="text-zinc-400">
-              Audit the submitted artifacts against each committed Definition of Done requirement:
-            </p>
+          <div className="space-y-4">
+            <div className="p-3 bg-[#141416] border border-[#202024] rounded-xl space-y-1 text-[11px]">
+              <span className="text-neutral-400">TARGET MILESTONE:</span>
+              <p className="font-semibold text-neutral-200">{milestone.title}</p>
+              {milestone.evidence && (
+                <div className="mt-1 pt-1 border-t border-[#26262a]">
+                  <span className="text-neutral-400">Worker Evidence Hash: </span>
+                  <span className="text-cyan-300 font-mono">
+                    {truncateAddress(milestone.evidence.evidenceHash, 6)}
+                  </span>
+                </div>
+              )}
+            </div>
 
-            {milestone.evidence && (
-              <div className="p-2.5 bg-zinc-900 border border-zinc-800 text-[11px] space-y-1">
-                <span className="text-zinc-400 block uppercase font-bold">SUBMITTED ARTIFACT:</span>
-                <a
-                  href={milestone.evidence.metadataUri}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-cyan-400 hover:underline flex items-center gap-1 font-mono"
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-neutral-400 font-semibold text-[11px]">
+                  AUDIT DEFINITION OF DONE CHECKLIST:
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const all: Record<number, boolean> = {};
+                    milestone.dodCriteria.forEach((_, i) => {
+                      all[i] = true;
+                    });
+                    setCheckedCriteria(all);
+                  }}
+                  className="text-[10px] text-cyan-300 bg-[#141416] px-2 py-0.5 rounded-lg border border-[#26262a]"
                 >
-                  {milestone.evidence.metadataUri} <ExternalLink className="w-3 h-3" />
-                </a>
+                  ⚡ Check All Criteria
+                </button>
               </div>
-            )}
-
-            <div className="space-y-1.5">
-              <span className="text-[11px] font-bold text-zinc-300 uppercase">DoD Criteria Checklist:</span>
               {milestone.dodCriteria.map((crit, idx) => (
                 <div
                   key={idx}
                   onClick={() =>
                     setCheckedCriteria((prev) => ({ ...prev, [idx]: !prev[idx] }))
                   }
-                  className={`p-2 border cursor-pointer flex items-center gap-2 ${
+                  className={`p-2.5 border rounded-xl cursor-pointer flex items-center gap-2.5 transition-colors ${
                     checkedCriteria[idx]
-                      ? 'bg-zinc-900 border-cyan-400 text-zinc-100'
-                      : 'bg-zinc-950 border-zinc-800 text-zinc-400'
+                      ? 'bg-[#141416] border-emerald-500/50 text-neutral-100'
+                      : 'bg-[#0d0d0f] border-[#26262a] text-neutral-400'
                   }`}
                 >
                   <div
-                    className={`w-3.5 h-3.5 border flex items-center justify-center ${
-                      checkedCriteria[idx] ? 'bg-cyan-400 border-cyan-400 text-black' : 'border-zinc-700'
+                    className={`w-4 h-4 border rounded flex items-center justify-center flex-shrink-0 ${
+                      checkedCriteria[idx] ? 'bg-emerald-500 border-emerald-500 text-black' : 'border-[#26262a]'
                     }`}
                   >
                     {checkedCriteria[idx] && '✓'}
@@ -366,7 +587,7 @@ export function QuickActionModal({
               onChange={(e) => setVerificationNotes(e.target.value)}
             />
 
-            <div className="pt-3 border-t border-zinc-800 flex justify-end gap-2">
+            <div className="pt-4 border-t border-[#26262a] flex justify-end gap-2">
               <Button variant="outline" size="sm" onClick={onClose} disabled={isProcessing}>
                 Cancel
               </Button>
@@ -383,30 +604,31 @@ export function QuickActionModal({
           </div>
         )}
 
+        {/* RELEASE SETTLEMENT */}
         {actionType === 'release' && milestone && (
-          <div className="space-y-4 text-xs">
-            <div className="p-3 bg-zinc-900 border border-zinc-800 space-y-2">
+          <div className="space-y-4">
+            <div className="p-4 bg-[#141416] border border-[#202024] rounded-xl space-y-2.5">
               <div className="flex justify-between">
-                <span className="text-zinc-400">DISBURSAL AMOUNT:</span>
+                <span className="text-neutral-400">DISBURSAL AMOUNT:</span>
                 <span className="font-bold text-emerald-400 text-base">
                   ${formatUsdc(milestone.amountUsdc)} USDC
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-zinc-400">RECIPIENT WORKER:</span>
-                <span className="font-mono text-zinc-300">{truncateAddress(agreement.worker, 6)}</span>
+                <span className="text-neutral-400">RECIPIENT WORKER:</span>
+                <span className="font-mono text-neutral-300">{truncateAddress(agreement.worker, 6)}</span>
               </div>
-              <div className="flex justify-between border-t border-zinc-800 pt-2">
-                <span className="text-zinc-400">STATUS:</span>
-                <span className="text-cyan-400 font-bold uppercase">Criteria Verified ✓</span>
+              <div className="flex justify-between border-t border-[#26262a] pt-2">
+                <span className="text-neutral-400">STATUS:</span>
+                <span className="text-emerald-400 font-bold uppercase">Criteria Verified ✓</span>
               </div>
             </div>
 
-            <p className="text-zinc-400 text-[11px]">
+            <p className="text-neutral-400 text-[11px]">
               Executing this instruction calls the Escrow Vault PDA to transfer ${formatUsdc(milestone.amountUsdc)} USDC directly into the worker&apos;s token account.
             </p>
 
-            <div className="pt-3 border-t border-zinc-800 flex justify-end gap-2">
+            <div className="pt-4 border-t border-[#26262a] flex justify-end gap-2">
               <Button variant="outline" size="sm" onClick={onClose} disabled={isProcessing}>
                 Cancel
               </Button>
@@ -423,6 +645,6 @@ export function QuickActionModal({
           </div>
         )}
       </div>
-    </div>
+    </SlideDrawer>
   );
 }

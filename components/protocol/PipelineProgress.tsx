@@ -1,19 +1,17 @@
 import React from 'react';
 import { MilestoneState } from '@/types/protocol';
-import { Check, ArrowRight } from 'lucide-react';
+import { Check } from 'lucide-react';
 
 export function PipelineProgress({ state }: { state: MilestoneState }) {
   const steps = [
     {
       id: 'dod',
-      name: 'Definition of Done',
       short: 'DoD Committed',
-      completed: true, // Always committed at creation
+      completed: true,
       current: state === MilestoneState.PENDING,
     },
     {
       id: 'evidence',
-      name: 'Evidence Submission',
       short: 'Evidence Proof',
       completed:
         state === MilestoneState.EVIDENCE_SUBMITTED ||
@@ -23,14 +21,12 @@ export function PipelineProgress({ state }: { state: MilestoneState }) {
     },
     {
       id: 'verification',
-      name: 'Verification',
       short: 'DoD Verified',
       completed: state === MilestoneState.VERIFIED || state === MilestoneState.RELEASED,
       current: state === MilestoneState.VERIFIED,
     },
     {
       id: 'settlement',
-      name: 'Settlement Release',
       short: 'USDC Released',
       completed: state === MilestoneState.RELEASED,
       current: false,
@@ -44,12 +40,12 @@ export function PipelineProgress({ state }: { state: MilestoneState }) {
           return (
             <div
               key={step.id}
-              className={`p-2.5 border transition-all ${
+              className={`p-3 rounded-xl border transition-all ${
                 step.completed
-                  ? 'bg-zinc-900/90 border-emerald-800/80 text-emerald-300'
+                  ? 'bg-[#141416] border-emerald-500/30 text-emerald-400'
                   : step.current
-                  ? 'bg-zinc-900 border-cyan-500 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.15)]'
-                  : 'bg-zinc-950/40 border-zinc-800 text-zinc-400'
+                  ? 'bg-[#141416] border-white text-white shadow-sm'
+                  : 'bg-[#0d0d0f] border-[#26262a] text-neutral-500'
               }`}
             >
               <div className="flex items-center justify-between mb-1">

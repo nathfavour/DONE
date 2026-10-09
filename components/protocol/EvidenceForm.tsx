@@ -8,7 +8,7 @@ import { PublicKey } from '@solana/web3.js';
 import { Button } from '../ui/Button';
 import { Input, Textarea } from '../ui/Input';
 import { Card, CardHeader, CardContent, CardFooter } from '../ui/Card';
-import { UploadCloud, Link as LinkIcon, ShieldAlert, CheckCircle2, Plus, Trash2 } from 'lucide-react';
+import { UploadCloud, Link as LinkIcon, Plus, Trash2 } from 'lucide-react';
 
 interface EvidenceFormProps {
   agreementKey: string;
@@ -90,11 +90,11 @@ export function EvidenceForm({ agreementKey, milestone, onExecute }: EvidenceFor
   };
 
   return (
-    <Card className="border-cyan-900/60 bg-zinc-950 font-mono">
-      <CardHeader className="bg-zinc-900/60">
+    <Card className="font-mono">
+      <CardHeader>
         <div className="flex items-center gap-2">
-          <UploadCloud className="w-4 h-4 text-cyan-400" />
-          <h3 className="font-bold text-sm text-zinc-100 uppercase tracking-wider">
+          <UploadCloud className="w-4 h-4 text-white" />
+          <h3 className="font-bold text-sm text-white uppercase tracking-wider">
             SUBMIT VERIFIABLE WORK EVIDENCE
           </h3>
         </div>
@@ -109,26 +109,26 @@ export function EvidenceForm({ agreementKey, milestone, onExecute }: EvidenceFor
                 'https://arweave.net/tx_indexer_geyser_final_v1.tar.gz',
               ]);
             }}
-            className="text-[10px] bg-cyan-950 hover:bg-cyan-900 text-cyan-300 px-2 py-0.5 border border-cyan-800"
+            className="text-[10px] bg-[#141416] hover:bg-[#1a1a1e] text-cyan-300 px-2.5 py-1 rounded-lg border border-[#26262a]"
           >
             ⚡ Auto-Fill Demo Proof
           </button>
-          <span className="text-[11px] text-zinc-400">WORKER ACTION</span>
+          <span className="text-[11px] text-neutral-400">WORKER ACTION</span>
         </div>
       </CardHeader>
 
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
-          <p className="text-xs text-zinc-400">
-            Submit cryptographic proof and artifact references to satisfy the committed Definition of Done criteria. Once submitted, the verifier will validate the evidence hash against the criteria.
+          <p className="text-xs text-neutral-400">
+            Submit cryptographic proof and artifact references to satisfy the committed Definition of Done criteria.
           </p>
 
           {/* DoD Criteria checklist summary for worker reference */}
-          <div className="p-3 bg-zinc-900/70 border border-zinc-800 space-y-2">
-            <span className="text-[10px] uppercase font-bold text-zinc-400 block tracking-wider">
+          <div className="p-3.5 bg-[#141416] border border-[#202024] rounded-xl space-y-2">
+            <span className="text-[10px] uppercase font-bold text-neutral-400 block tracking-wider">
               TARGET DEFINITION OF DONE CRITERIA ({milestone.dodCriteria.length})
             </span>
-            <ul className="space-y-1.5 text-xs text-zinc-300">
+            <ul className="space-y-1.5 text-xs text-neutral-300">
               {milestone.dodCriteria.map((c, i) => (
                 <li key={i} className="flex items-start gap-2">
                   <span className="text-cyan-400 font-bold flex-shrink-0">[{i + 1}]</span>
@@ -151,8 +151,8 @@ export function EvidenceForm({ agreementKey, milestone, onExecute }: EvidenceFor
           {/* Deliverable links */}
           <div className="space-y-2">
             <div className="flex justify-between items-center">
-              <label className="text-xs font-medium text-zinc-300 tracking-wide flex items-center gap-1.5">
-                <LinkIcon className="w-3 h-3 text-cyan-400" />
+              <label className="text-xs font-medium text-neutral-300 tracking-wide flex items-center gap-1.5">
+                <LinkIcon className="w-3 h-3 text-white" />
                 VERIFICATION LINKS & PR REFERENCES
               </label>
               <button
@@ -174,7 +174,7 @@ export function EvidenceForm({ agreementKey, milestone, onExecute }: EvidenceFor
                   <button
                     type="button"
                     onClick={() => removeLink(idx)}
-                    className="p-2 text-zinc-500 hover:text-rose-400"
+                    className="p-2 text-neutral-500 hover:text-red-400"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -195,17 +195,17 @@ export function EvidenceForm({ agreementKey, milestone, onExecute }: EvidenceFor
           />
 
           {/* Live Canonical Hash Display */}
-          <div className="p-3 bg-zinc-900 border border-zinc-800 space-y-1">
-            <span className="text-[10px] uppercase font-bold text-zinc-400 block tracking-wider">
-              CANONICAL SHA-256 EVIDENCE COMMITMENT (PRE-IMAGE DETERMINISTIC)
+          <div className="p-3 bg-[#141416] border border-[#202024] rounded-xl space-y-1">
+            <span className="text-[10px] uppercase font-bold text-neutral-400 block tracking-wider">
+              CANONICAL SHA-256 EVIDENCE COMMITMENT:
             </span>
-            <div className="text-[11px] text-amber-300 font-mono break-all">{liveHash}</div>
+            <div className="text-[11px] text-amber-400 font-mono break-all">{liveHash}</div>
           </div>
         </CardContent>
 
         <CardFooter className="justify-between">
-          <span className="text-[11px] text-zinc-400">
-            Recorded directly to Milestone Account on Solana Devnet
+          <span className="text-[11px] text-neutral-500">
+            Recorded on Solana Devnet Milestone Account
           </span>
           <Button
             type="submit"
@@ -214,7 +214,7 @@ export function EvidenceForm({ agreementKey, milestone, onExecute }: EvidenceFor
             disabled={isSubmitting || !metadataUri.trim() || !notes.trim()}
             isLoading={isSubmitting}
           >
-            Submit Evidence to On-Chain Milestone
+            Submit Evidence to Chain
           </Button>
         </CardFooter>
       </form>

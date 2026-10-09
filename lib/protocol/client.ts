@@ -559,6 +559,13 @@ class ProtocolClient implements DoneProtocolProgram {
     const workerAta = new PublicKey(DEMO_KEYS.WORKER);
     return { signature, workerAta };
   }
+
+  public async releaseSettlement(params: {
+    agreement: PublicKey;
+    milestoneIndex: number;
+  }): Promise<{ signature: string; workerAta: PublicKey }> {
+    return this.releasePayment(params);
+  }
 }
 
 export const protocolClient = new ProtocolClient();

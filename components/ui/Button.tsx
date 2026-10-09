@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'destructive' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
 }
@@ -9,21 +9,27 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ children, variant = 'primary', size = 'md', isLoading = false, className = '', disabled, ...props }, ref) => {
     const base =
-      'inline-flex items-center justify-center font-mono font-medium transition-colors focus:outline-none focus:ring-1 focus:ring-cyan-400 disabled:opacity-40 disabled:cursor-not-allowed select-none rounded-none tracking-wide text-xs sm:text-sm';
+      'inline-flex items-center justify-center font-mono font-medium transition-colors focus:outline-none focus:ring-1 focus:ring-neutral-400 disabled:opacity-40 disabled:cursor-not-allowed select-none rounded-xl tracking-wide text-xs sm:text-sm';
 
     const variants = {
       primary:
-        'bg-cyan-500 hover:bg-cyan-400 text-black font-semibold border border-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.25)]',
-      secondary: 'bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border border-zinc-700',
-      outline: 'bg-transparent hover:bg-zinc-900 text-zinc-200 border border-zinc-800 hover:border-zinc-700',
-      danger: 'bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-800',
-      ghost: 'bg-transparent hover:bg-zinc-800/60 text-zinc-300 border border-transparent',
+        'bg-white text-black font-semibold hover:bg-neutral-200 transition-colors shadow-sm',
+      secondary:
+        'bg-transparent border border-[#26262a] text-neutral-200 hover:bg-[#141416]',
+      outline:
+        'bg-transparent border border-[#26262a] text-neutral-200 hover:bg-[#141416]',
+      danger:
+        'bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20',
+      destructive:
+        'bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20',
+      ghost:
+        'bg-transparent hover:bg-[#141416] text-neutral-300 border border-transparent',
     };
 
     const sizes = {
-      sm: 'px-2.5 py-1 text-xs gap-1.5',
-      md: 'px-4 py-2 gap-2',
-      lg: 'px-5 py-2.5 text-sm gap-2.5',
+      sm: 'py-1.5 px-3 text-xs gap-1.5',
+      md: 'py-2.5 px-4 text-xs sm:text-sm gap-2',
+      lg: 'py-3 px-5 text-sm gap-2.5',
     };
 
     return (
