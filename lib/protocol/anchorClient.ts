@@ -1,3 +1,4 @@
+import '@/lib/polyfills';
 import * as anchor from '@coral-xyz/anchor';
 import {
   Connection,
