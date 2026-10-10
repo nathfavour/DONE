@@ -4,7 +4,15 @@ import React, { useState } from 'react';
 import { useWallet } from '@/components/web3/WalletContext';
 import { protocolClient } from '@/lib/protocol/client';
 import { useQueryClient } from '@tanstack/react-query';
-import { DEVNET_USDC_MINT, DONE_PROGRAM_ID, getExplorerUrl, truncateAddress, formatUsdc } from '@/lib/solana';
+import {
+  DEVNET_USDC_MINT,
+  DONE_PROGRAM_ID,
+  PROTOCOL_CONFIG_PDA,
+  PROGRAM_DATA_PDA,
+  getExplorerUrl,
+  truncateAddress,
+  formatUsdc,
+} from '@/lib/solana';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { DoneLogo } from '@/components/protocol/DoneLogo';
@@ -155,6 +163,24 @@ export default function SettingsDiagnosticsPage() {
                 </span>
                 <div className="p-3 bg-[#000000] border border-[#26262a] rounded-xl font-mono text-emerald-400 break-all select-all">
                   {DEVNET_USDC_MINT.toBase58()}
+                </div>
+              </div>
+
+              <div>
+                <span className="text-[11px] text-neutral-400 block mb-1 font-semibold">
+                  PROTOCOL CONFIG PDA:
+                </span>
+                <div className="p-3 bg-[#000000] border border-[#26262a] rounded-xl font-mono text-cyan-400 break-all select-all">
+                  {PROTOCOL_CONFIG_PDA.toBase58()}
+                </div>
+              </div>
+
+              <div>
+                <span className="text-[11px] text-neutral-400 block mb-1 font-semibold">
+                  PROGRAM DATA PDA:
+                </span>
+                <div className="p-3 bg-[#000000] border border-[#26262a] rounded-xl font-mono text-neutral-300 break-all select-all">
+                  {PROGRAM_DATA_PDA.toBase58()}
                 </div>
               </div>
             </div>

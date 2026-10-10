@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { PublicKey, Keypair, Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { DEVNET_RPC_URL } from '@/lib/solana';
+import { isMobileBrowser, launchMobileWallet } from '@/lib/mobileWallet';
 
 export interface WalletContextType {
   connected: boolean;
@@ -154,6 +155,12 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
           }
           return true;
         } else {
+          // If on mobile browser, launch the native Phantom Mobile app directly via universal/deep link
+          if (isMobileBrowser()) {
+            launchMobileWallet('phantom');
+            setConnectError('Opening Phantom Mobile App... Return here after accepting connection in Phantom, or launch via the button below.');
+            return false;
+          }
           setConnectError('Phantom wallet extension is not installed in your browser. Install Phantom from phantom.app or import your address.');
           return false;
         }
@@ -175,6 +182,12 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
           }
           return true;
         } else {
+          // If on mobile browser, launch the native Solflare Mobile app directly via universal/deep link
+          if (isMobileBrowser()) {
+            launchMobileWallet('solflare');
+            setConnectError('Opening Solflare Mobile App... Return here after accepting connection in Solflare, or launch via the button below.');
+            return false;
+          }
           setConnectError('Solflare wallet extension is not installed in your browser. Install Solflare from solflare.com or import your address.');
           return false;
         }

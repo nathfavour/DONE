@@ -73,6 +73,9 @@ export interface AgreementAccount {
   vaultPda: string;
   bump: number;
   milestones: MilestoneAccount[];
+  workerAccepted?: boolean;
+  agreementId?: string;
+  isOnChain?: boolean;
 }
 
 export interface TransactionExecutionState {

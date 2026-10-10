@@ -15,6 +15,7 @@ import {
   getVaultPda,
 } from './pda';
 import { uint8ArrayToHex } from './hashing';
+import { fetchAllOnChainAgreements } from './anchorClient';
 
 const STORAGE_KEY = 'done_protocol_agreements_live_v2';
 const LOGS_KEY = 'done_protocol_logs_v1';
@@ -118,11 +119,29 @@ class ProtocolClient implements DoneProtocolProgram {
   }
 
   public async getAgreements(): Promise<AgreementAccount[]> {
-    return this.loadAgreements();
+    const local = this.loadAgreements();
+    try {
+      const onChain = await fetchAllOnChainAgreements();
+      if (!onChain || onChain.length === 0) return local;
+
+      // Merge on-chain with local (on-chain takes precedence)
+      const map = new Map<string, AgreementAccount>();
+      for (const item of onChain) {
+        map.set(item.publicKey, item);
+      }
+      for (const item of local) {
+        if (!map.has(item.publicKey)) {
+          map.set(item.publicKey, item);
+        }
+      }
+      return Array.from(map.values());
+    } catch {
+      return local;
+    }
   }
 
   public async getAgreement(publicKey: string): Promise<AgreementAccount | null> {
-    const list = this.loadAgreements();
+    const list = await this.getAgreements();
     return list.find((a) => a.publicKey === publicKey) || null;
   }
 

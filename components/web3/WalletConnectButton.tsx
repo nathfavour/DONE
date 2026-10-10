@@ -4,8 +4,9 @@ import React, { useState } from 'react';
 import { useWallet } from './WalletContext';
 import { truncateAddress, formatUsdc, getExplorerUrl } from '@/lib/solana';
 import { Button } from '../ui/Button';
-import { ChevronDown, Copy, Check, ExternalLink, Droplets, Wallet, ShieldCheck, RefreshCw } from 'lucide-react';
+import { ChevronDown, Copy, Check, ExternalLink, Droplets, Wallet, ShieldCheck, RefreshCw, Smartphone } from 'lucide-react';
 import { DoneLogo } from '../protocol/DoneLogo';
+import { isMobileBrowser, getPhantomDeepLink, getSolflareDeepLink, launchMobileWallet } from '@/lib/mobileWallet';
 
 export function WalletConnectButton() {
   const {
@@ -34,6 +35,9 @@ export function WalletConnectButton() {
 
   const hasPhantom = typeof window !== 'undefined' && Boolean((window as unknown as { solana?: { isPhantom?: boolean } }).solana);
   const hasSolflare = typeof window !== 'undefined' && Boolean((window as unknown as { solflare?: { isSolflare?: boolean } }).solflare);
+  const isMobile = typeof window !== 'undefined' && isMobileBrowser();
+  const phantomLinks = typeof window !== 'undefined' ? getPhantomDeepLink() : { universalLink: '', nativeScheme: '' };
+  const solflareLinks = typeof window !== 'undefined' ? getSolflareDeepLink() : { universalLink: '', nativeScheme: '' };
 
   const handleCopy = () => {
     if (!publicKeyString) return;
@@ -98,7 +102,9 @@ export function WalletConnectButton() {
                   <DoneLogo className="w-6 h-6" />
                   <div>
                     <h3 className="font-bold text-sm text-white">Connect Solana Wallet</h3>
-                    <p className="text-[11px] text-neutral-400">Select a real Solana provider</p>
+                    <p className="text-[11px] text-neutral-400">
+                      {isMobile ? 'Mobile App Universal Link or Web3' : 'Select a real Solana provider'}
+                    </p>
                   </div>
                 </div>
                 <button
@@ -109,75 +115,134 @@ export function WalletConnectButton() {
                 </button>
               </div>
 
+              {isMobile && (
+                <div className="p-2.5 rounded-xl bg-violet-600/10 border border-violet-500/30 text-violet-300 text-[11px] flex items-center gap-2">
+                  <Smartphone className="w-4 h-4 flex-shrink-0 text-violet-400" />
+                  <span>Mobile detected: Tapping Phantom or Solflare will launch your native mobile wallet app.</span>
+                </div>
+              )}
+
               {connectError && (
-                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex flex-col gap-1">
-                  <span className="font-bold">Connection Failed:</span>
+                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex flex-col gap-1.5">
+                  <span className="font-bold">Notice:</span>
                   <span>{connectError}</span>
+                  {isMobile && (
+                    <div className="flex gap-2 pt-1">
+                      <a
+                        href={phantomLinks.universalLink}
+                        target="_top"
+                        rel="noopener noreferrer"
+                        className="px-2.5 py-1 rounded bg-violet-600 text-white font-bold text-[10px] hover:bg-violet-500 transition-colors"
+                      >
+                        Launch Phantom App ↗
+                      </a>
+                      <a
+                        href={solflareLinks.universalLink}
+                        target="_top"
+                        rel="noopener noreferrer"
+                        className="px-2.5 py-1 rounded bg-amber-600 text-white font-bold text-[10px] hover:bg-amber-500 transition-colors"
+                      >
+                        Launch Solflare App ↗
+                      </a>
+                    </div>
+                  )}
                 </div>
               )}
 
               <div className="space-y-2">
                 {/* Phantom */}
-                <button
-                  type="button"
-                  onClick={() => handleConnectOption('phantom')}
-                  className="w-full p-3.5 bg-[#000000] hover:bg-neutral-950 border border-[#26262a] hover:border-violet-500/50 rounded-xl flex items-center justify-between transition-all group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-violet-600/20 border border-violet-500/30 flex items-center justify-center text-violet-400 font-bold text-xs">
-                      PH
-                    </div>
-                    <div className="text-left">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-white group-hover:text-violet-300">
-                          Phantom Wallet
-                        </span>
-                        {hasPhantom && (
-                          <span className="text-[9px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.2 rounded font-bold">
-                            Detected
-                          </span>
-                        )}
+                <div className="space-y-1">
+                  <button
+                    type="button"
+                    onClick={() => handleConnectOption('phantom')}
+                    className="w-full p-3.5 bg-[#000000] hover:bg-neutral-950 border border-[#26262a] hover:border-violet-500/50 rounded-xl flex items-center justify-between transition-all group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-violet-600/20 border border-violet-500/30 flex items-center justify-center text-violet-400 font-bold text-xs">
+                        PH
                       </div>
-                      <span className="text-[10px] text-neutral-400">
-                        Browser extension or mobile Solana wallet
-                      </span>
+                      <div className="text-left">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-white group-hover:text-violet-300">
+                            Phantom {isMobile ? 'Mobile App' : 'Wallet'}
+                          </span>
+                          {hasPhantom ? (
+                            <span className="text-[9px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.2 rounded font-bold">
+                              Detected
+                            </span>
+                          ) : isMobile ? (
+                            <span className="text-[9px] bg-violet-500/20 text-violet-300 border border-violet-500/30 px-1.5 py-0.2 rounded font-bold">
+                              App Link
+                            </span>
+                          ) : null}
+                        </div>
+                        <span className="text-[10px] text-neutral-400">
+                          {isMobile ? 'Launch native Phantom iOS/Android app' : 'Browser extension or mobile Solana wallet'}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                  <span className="text-[10px] text-violet-400 group-hover:translate-x-0.5 transition-transform">
-                    Connect →
-                  </span>
-                </button>
+                    <span className="text-[10px] text-violet-400 group-hover:translate-x-0.5 transition-transform font-bold">
+                      {isMobile && !hasPhantom ? 'Open App →' : 'Connect →'}
+                    </span>
+                  </button>
+                  {isMobile && !hasPhantom && (
+                    <a
+                      href={phantomLinks.universalLink}
+                      target="_top"
+                      rel="noopener noreferrer"
+                      className="text-[10px] text-violet-400 hover:text-violet-300 underline block pl-3"
+                    >
+                      Direct link: Open in Phantom App ↗
+                    </a>
+                  )}
+                </div>
 
                 {/* Solflare */}
-                <button
-                  type="button"
-                  onClick={() => handleConnectOption('solflare')}
-                  className="w-full p-3.5 bg-[#000000] hover:bg-neutral-950 border border-[#26262a] hover:border-violet-500/50 rounded-xl flex items-center justify-between transition-all group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 font-bold text-xs">
-                      SF
-                    </div>
-                    <div className="text-left">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-white group-hover:text-amber-300">
-                          Solflare Wallet
-                        </span>
-                        {hasSolflare && (
-                          <span className="text-[9px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.2 rounded font-bold">
-                            Detected
-                          </span>
-                        )}
+                <div className="space-y-1">
+                  <button
+                    type="button"
+                    onClick={() => handleConnectOption('solflare')}
+                    className="w-full p-3.5 bg-[#000000] hover:bg-neutral-950 border border-[#26262a] hover:border-amber-500/50 rounded-xl flex items-center justify-between transition-all group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 font-bold text-xs">
+                        SF
                       </div>
-                      <span className="text-[10px] text-neutral-400">
-                        Solana native web & extension wallet
-                      </span>
+                      <div className="text-left">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-white group-hover:text-amber-300">
+                            Solflare {isMobile ? 'Mobile App' : 'Wallet'}
+                          </span>
+                          {hasSolflare ? (
+                            <span className="text-[9px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.2 rounded font-bold">
+                              Detected
+                            </span>
+                          ) : isMobile ? (
+                            <span className="text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-1.5 py-0.2 rounded font-bold">
+                              App Link
+                            </span>
+                          ) : null}
+                        </div>
+                        <span className="text-[10px] text-neutral-400">
+                          {isMobile ? 'Launch native Solflare iOS/Android app' : 'Solana native web & extension wallet'}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                  <span className="text-[10px] text-amber-400 group-hover:translate-x-0.5 transition-transform">
-                    Connect →
-                  </span>
-                </button>
+                    <span className="text-[10px] text-amber-400 group-hover:translate-x-0.5 transition-transform font-bold">
+                      {isMobile && !hasSolflare ? 'Open App →' : 'Connect →'}
+                    </span>
+                  </button>
+                  {isMobile && !hasSolflare && (
+                    <a
+                      href={solflareLinks.universalLink}
+                      target="_top"
+                      rel="noopener noreferrer"
+                      className="text-[10px] text-amber-400 hover:text-amber-300 underline block pl-3"
+                    >
+                      Direct link: Open in Solflare App ↗
+                    </a>
+                  )}
+                </div>
 
                 {/* Import Address */}
                 <div className="pt-1">
