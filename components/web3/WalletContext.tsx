@@ -38,12 +38,19 @@ const STORAGE_USDC_BALANCE = 'done_wallet_usdc_balance_v3';
 // Unconditionally purge any legacy fallback or demo wallet addresses from browser storage
 if (typeof window !== 'undefined') {
   try {
-    // Clear out old keys that stored fallback addresses
-    localStorage.removeItem('done_wallet_connected');
-    localStorage.removeItem('done_wallet_live_keypair');
-    localStorage.removeItem('done_wallet_custom_address');
-    localStorage.removeItem('done_wallet_name');
-    localStorage.removeItem('done_wallet_usdc_balance_live');
+    const legacyKeys = [
+      'done_wallet_connected',
+      'done_wallet_connected_v2',
+      'done_wallet_connected_v3',
+      'done_wallet_live_keypair',
+      'done_wallet_custom_address',
+      'done_wallet_custom_address_v3',
+      'done_wallet_name',
+      'done_wallet_name_v3',
+      'done_wallet_usdc_balance_live',
+      'done_wallet_usdc_balance_v3',
+    ];
+    legacyKeys.forEach((key) => localStorage.removeItem(key));
   } catch {
     // ignore
   }
@@ -52,53 +59,14 @@ if (typeof window !== 'undefined') {
 export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [isConnecting, setIsConnecting] = useState<boolean>(false);
   const [connectError, setConnectError] = useState<string | null>(null);
-  const [walletName, setWalletName] = useState<string>(() => {
-    if (typeof window === 'undefined') return '';
-    return localStorage.getItem(STORAGE_WALLET_NAME) || '';
-  });
+  const [walletName, setWalletName] = useState<string>('');
   const [isLiveExtension, setIsLiveExtension] = useState<boolean>(false);
   const [solBalance, setSolBalance] = useState<number>(0);
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('done_wallet_live_keypair');
-      localStorage.removeItem('done_wallet_custom_address');
-      localStorage.removeItem('done_wallet_connected');
-    }
-  }, []);
-
-  const [connected, setConnected] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
-    const saved = localStorage.getItem(STORAGE_CONNECTED);
-    return saved === 'true';
-  });
-
-  const [publicKey, setPublicKey] = useState<PublicKey | null>(() => {
-    if (typeof window === 'undefined') return null;
-    const isConn = localStorage.getItem(STORAGE_CONNECTED) === 'true';
-    if (!isConn) return null;
-    try {
-      const customAddr = localStorage.getItem(STORAGE_CUSTOM_ADDRESS);
-      if (customAddr) return new PublicKey(customAddr);
-      return null;
-    } catch {
-      return null;
-    }
-  });
-
-  const [usdcBalance, setUsdcBalance] = useState<number>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const isConn = localStorage.getItem(STORAGE_CONNECTED) === 'true';
-        if (!isConn) return 0;
-        const saved = localStorage.getItem(STORAGE_USDC_BALANCE);
-        if (saved) return Number(saved);
-      } catch {
-        // ignore
-      }
-    }
-    return 0;
-  });
+  // Always start disconnected - zero demo addresses, zero fallback keypairs
+  const [connected, setConnected] = useState<boolean>(false);
+  const [publicKey, setPublicKey] = useState<PublicKey | null>(null);
+  const [usdcBalance, setUsdcBalance] = useState<number>(0);
 
   const [currentSlot, setCurrentSlot] = useState<number>(298419203);
   const [rpcLatencyMs, setRpcLatencyMs] = useState<number>(38);

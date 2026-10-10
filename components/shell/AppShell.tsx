@@ -107,8 +107,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Main Container Wrapper */}
       <div className="flex-1 flex flex-col md:pl-64 min-w-0 bg-[#16171a]">
-        {/* Top Context Bar */}
-        <header className="h-16 px-4 md:px-8 border-b border-[#26262a] bg-[#000000] flex items-center justify-between sticky top-0 z-30">
+        {/* Top Context Bar: Attached to top with rounded bottom corners (furthest from top attached corners) */}
+        <header className="h-16 px-4 md:px-8 border-b border-x border-[#26262a] bg-[#000000] rounded-b-2xl flex items-center justify-between sticky top-0 z-30 shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
           {/* Mobile brand */}
           <Link href="/" className="md:hidden flex items-center gap-2.5">
             <DoneLogo className="w-7 h-7" />
@@ -146,8 +146,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </main>
       </div>
 
-      {/* Mobile Bottom Dock Navigation */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 h-16 bg-[#000000] border-t border-[#26262a] rounded-t-2xl z-40 flex items-center justify-around px-2 select-none">
+      {/* Mobile Bottom Dock Navigation: Attached to bottom with rounded top corners, icons only (no text) */}
+      <nav className="md:hidden fixed bottom-0 inset-x-0 h-16 bg-[#000000] border-t border-x border-[#26262a] rounded-t-2xl z-40 flex items-center justify-around px-2 select-none shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
         {navItems.map((item) => {
           const Icon = item.icon;
           const active =
@@ -158,21 +158,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-colors ${
-                active ? 'text-violet-400 font-bold' : 'text-neutral-400 hover:text-neutral-200'
+              aria-label={item.label}
+              title={item.label}
+              className={`p-2.5 rounded-xl transition-all flex items-center justify-center ${
+                active
+                  ? 'text-violet-400 bg-violet-600/15 border border-violet-500/30'
+                  : 'text-neutral-400 hover:text-neutral-200 hover:bg-[#16171a]'
               }`}
             >
-              <Icon className="w-4 h-4 mb-0.5" />
-              <span className="text-[10px] font-medium">{item.label.split(' ')[0]}</span>
+              <Icon className="w-5 h-5" />
             </Link>
           );
         })}
         <button
           onClick={() => setIsCreateDrawerOpen(true)}
-          className="flex flex-col items-center justify-center py-1 px-2 text-violet-400 hover:text-violet-300"
+          aria-label="New Escrow"
+          title="New Escrow"
+          className="p-2.5 rounded-xl text-violet-300 hover:text-white bg-violet-600/20 hover:bg-violet-600/30 border border-violet-500/30 transition-all flex items-center justify-center"
         >
-          <PlusCircle className="w-5 h-5 mb-0.5 text-violet-400" />
-          <span className="text-[10px] font-bold">New</span>
+          <PlusCircle className="w-5 h-5 text-violet-400" />
         </button>
       </nav>
     </div>

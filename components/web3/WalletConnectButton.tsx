@@ -72,7 +72,7 @@ export function WalletConnectButton() {
     }
   };
 
-  if (!connected) {
+  if (!connected || !publicKeyString) {
     return (
       <>
         <Button
